@@ -147,46 +147,70 @@ document.addEventListener('DOMContentLoaded', () => {
 		const actions = {
 			start: "mousedown",
 			move: "mousemove",
-			end: "mouseup"
+			end: "mouseup",
+			touchstar: "touchstart",
+			touchmove: "touchmove",
+			touchend: "touchend"
 		}
 
 		let handleWidth = view.handleMin.offsetWidth
 
-		let eventStart = function(e) {// событие нажатия на бегунок
-			// событие перемещения бегунка
-			let handleCoords = getCoords(view.originMin) // координаты бегунка
-			let shiftX = e.pageX - handleCoords.left // отступ слева
+		let eventStart = function (e) { // событие нажатия на бегунок
+			let handleCoords, shiftX
+			let handle = this
 
-			let eventMove = function(e) {
+			if (handle === view.handleMin) {
+				handleCoords = getCoords(view.originMin) // координаты бегунка
+				shiftX = e.pageX - handleCoords.left // отступ слева
+			} else {
+				handleCoords = getCoords(view.originMax) // координаты бегунка
+				shiftX = e.pageX - handleCoords.left // отступ слева
+			}
 
+			let eventMove = function (e) { // событие перемещения бегунка
 				let newLeft = e.pageX - shiftX - getCoords(view.base).left // положение относительно страницы
-	
-				if (newLeft < 0) { // если бегунок уперся в начало диапазона
-					newLeft = 0
+
+				if (handle === view.handleMin) {
+
+					newLeft < 0 ? newLeft = 0 : newLeft // если бегунок уперся в начало диапазона
+
+					newLeft > view.maxValuePercentage - handleWidth ? newLeft = view.maxValuePercentage - handleWidth : newLeft // если бегунок уперся в другой бегунок
+
+					view.originMin.style.left = newLeft + 'px' // изменение положения бегунка
+					view.minValuePercentage = newLeft // присвоение положения бегунка
+
+				} else {
+
+					newLeft < view.minValuePercentage + handleWidth ? newLeft = view.minValuePercentage + handleWidth : newLeft // если бегунок уперся в другой бегунок
+
+					newLeft > view.base.offsetWidth ? newLeft = view.base.offsetWidth : newLeft // если бегунок уперся в конец диапазона
+
+					view.originMax.style.left = newLeft + 'px' // изменение положения бегунка
+					view.maxValuePercentage = newLeft // присвоение положения бегунка
+
 				}
-	
-				if (newLeft > view.maxValuePercentage - handleWidth) { // если бегунок уперся в другой бегунок
-					newLeft = view.maxValuePercentage - handleWidth
-				}
-	
-				view.minValuePercentage = newLeft // присвоение положения бегунка
-				view.originMin.style.left = view.minValuePercentage + 'px' // изменение положения бегунка
-	
-				let newLowerRange = view.tooltipMin.innerText = Math.round(view.minValuePercentage / view.percentage) + view.minRange
-				// изменение значения в ярлыке
+
+				let newLowerRange = view.tooltipMin.innerText = Math.round(view.minValuePercentage / view.percentage) + view.minRange // изменение значения в ярлыке
+				let newUpperRange = view.tooltipMax.innerText = Math.round(view.maxValuePercentage / view.percentage) + view.minRange // изменение значения в ярлыке
+				model.setLowerRange(newLowerRange) // передача измененного значения в модель
+				model.setUpperRange(newUpperRange) // передача измененного значения в модель
 
 				view.setConnect(view.connect, view.minValuePercentage, view.maxValuePercentage, view.percentage, view.range) // изменение внутренней полосы
-	
-				model.setLowerRange(newLowerRange) // передача измененного значения в модель
+
 			}
 
 			document.addEventListener(actions.move, eventMove)
 
-			let eventEnd = function() {
-				console.log(handleCoords.left, "координата минимуна")
-				console.log(Math.round(view.minValuePercentage / view.percentage) + view.minRange, "Значение минимума")
+			let eventEnd = function () {
 				document.removeEventListener(actions.start, eventStart)
 				document.removeEventListener(actions.move, eventMove)
+				// if (handle === view.handelMin) {
+				// 	console.log(handleCoords.left, "координата минимуна")
+				// 	console.log(Math.round(view.minValuePercentage / view.percentage) + view.minRange, "Значение минимума")
+				// } else {
+				// 	console.log(handleCoords.left, "координата максимума")
+				// 	console.log(Math.round(view.maxValuePercentage / view.percentage) + view.minRange, "Значение максимума")
+				// }
 			}
 
 			document.addEventListener(actions.end, eventEnd)
@@ -194,47 +218,13 @@ document.addEventListener('DOMContentLoaded', () => {
 			return false
 		}
 
-		view.originMin.addEventListener(actions.start, eventStart)
+		view.handleMin.addEventListener(actions.start, eventStart)
 
-		
+		view.handleMax.addEventListener(actions.start, eventStart)
 
-		view.originMin.ondragstart = function () {
+		view.handleMin.ondragstart = function () {
 			return false
 		}
-
-		view.originMax.addEventListener(actions.start, (e) => { // событие нажатия на бегунок
-			let handleCoords = getCoords(view.originMax) // координаты бегунка
-			let shiftX = e.pageX - handleCoords.left // отступ слева
-
-			document.addEventListener(actions.move, (e) => { // событие перемещения бегунка
-				let newLeft = e.pageX - shiftX - getCoords(view.base).left // положение относительно страницы
-
-				if (newLeft < view.minValuePercentage + handleWidth) { // если бегунок уперся в другой бегунок
-					newLeft = view.minValuePercentage + handleWidth
-				}
-
-				if (newLeft > view.base.offsetWidth) { // если бегунок уперся в конец диапазона
-					newLeft = view.base.offsetWidth
-				}
-
-				view.maxValuePercentage = newLeft // присвоение положения бегунка
-				view.originMax.style.left = view.maxValuePercentage + 'px' // изменение положения бегунка
-
-				let newUpperRange = view.tooltipMax.innerText = Math.round(view.maxValuePercentage / view.percentage) + view.minRange // изменение значения в ярлыке
-
-				view.setConnect(view.connect, view.minValuePercentage, view.maxValuePercentage, view.percentage, view.range) // изменение внутренней полосы
-
-				model.setUpperRange(newUpperRange) // передача измененного значения в модель
-			})
-
-			document.addEventListener(actions.end, () => { // событие отжатия кнопки мыши
-				console.log(handleCoords.left, "координата максимума")
-				console.log(Math.round(view.maxValuePercentage / view.percentage) + view.minRange, "Значение максимума")
-				document.onmousemove = document.onmouseup = null
-			})
-
-			return false
-		})
 
 		function getCoords(elem) { // функция получения координа элемента
 			let box = elem.getBoundingClientRect()
@@ -252,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const controller = new MVC.Controller(model, view)
 
 
-
+	//старый код без разделения на слои
 	const slider = document.querySelector(".slider")
 	const base = slider.querySelector(".slider-base")
 	const connect = slider.querySelector(".slider-connect")
