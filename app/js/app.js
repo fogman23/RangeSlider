@@ -50,21 +50,22 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	const MVC = {}
-
+	
 	MVC.Model = function () {
 		let that = this
 
 		let minRange = 0 // начальное значение диапазона
 		let maxRange = 1000 // конечное значение диапазона
-		let range = maxRange - minRange // длина диапазона
 		let lowerRange = 200 // значение бегунка минимума
 		let upperRange = 600 // значение бегунка максимума
+		let tooltip = true // ярлыки над бегунками
 
-		this.getRange = {
+		this.getProps = {
 			minRange: minRange,
 			maxRange: maxRange,
 			lowerRange: lowerRange,
-			upperRange: upperRange
+			upperRange: upperRange,
+			tooltip: tooltip
 		}
 
 		this.setLowerRange = function (value) {
@@ -79,6 +80,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	MVC.View = function (model, rootObject) {
 		let that = this
+
+		let minRange = that.minRange = model.getProps.minRange
+		let maxRange = that.maxRange = model.getProps.maxRange
+		let range = that.range = maxRange - minRange
+		let lowerRange = that.lowerRange = model.getProps.lowerRange
+		let upperRange = that.upperRange = model.getProps.upperRange
+		let tooltip = that.tooltip = model.getProps.tooltip
+
+		let tooltipMin, tooltipMax
 
 		function createAndPaste(className, ParentElement) {
 			let d = document.createElement("div")
@@ -97,31 +107,27 @@ document.addEventListener('DOMContentLoaded', () => {
 		handleMin.classList.add(cssClasses.cssPrefix + cssClasses.handleLower)
 		let handleMax = that.handleMax = createAndPaste(cssClasses.handle, originMax)
 		handleMax.classList.add(cssClasses.cssPrefix + cssClasses.handleUpper)
-		let tooltipMin = that.tooltipMin = createAndPaste(cssClasses.tooltip, handleMin)
-		let tooltipMax = that.tooltipMax = createAndPaste(cssClasses.tooltip, handleMax)
+		if (tooltip) {
+			tooltipMin = that.tooltipMin = createAndPaste(cssClasses.tooltip, handleMin)
+			tooltipMax = that.tooltipMax = createAndPaste(cssClasses.tooltip, handleMax)
+		}
 		let touchAreaMin = that.touchAreaMin = createAndPaste(cssClasses.touchArea, handleMin)
 		let touchAreaMax = that.touchAreaMax = createAndPaste(cssClasses.touchArea, handleMax)
 
-		let minRange = that.minRange = model.getRange.minRange
-		let maxRange = that.maxRange = model.getRange.maxRange
-		let range = that.range = maxRange - minRange
-		let lowerRange = that.lowerRange = model.getRange.lowerRange
-		let upperRange = that.upperRange = model.getRange.upperRange
-
 		let percentage = that.percentage = base.offsetWidth / range // процентное соотношение длины линии относительное заданной длины диапазона
 
-		function setPosSliderLower(num) { // функция установки минимального бегунка в заданное положение
+		function setPosOriginLower(num) { // функция установки минимального бегунка в заданное положение
 			originMin.style.left = (num - minRange) * percentage + "px"
 			return num
 		}
 
-		function setPosSliderUpper(num) { // функция установки маскимального бегунка в заданное положение
+		function setPosOriginUpper(num) { // функция установки маскимального бегунка в заданное положение
 			originMax.style.left = (num - minRange) * percentage + "px"
 			return num
 		}
 
-		let minValue = that.minValue = setPosSliderLower(lowerRange) // задание значения минимального бегунка
-		let maxValue = that.maxValue = setPosSliderUpper(upperRange) // задание значения максимального бегунка
+		let minValue = that.minValue = setPosOriginLower(lowerRange) // задание значения минимального бегунка
+		let maxValue = that.maxValue = setPosOriginUpper(upperRange) // задание значения максимального бегунка
 
 		let minValuePercentage = that.minValuePercentage = (minValue - minRange) * percentage // относительное значение минимального бегунка
 		let maxValuePercentage = that.maxValuePercentage = (maxValue - minRange) * percentage // относительное значение максимального бегунка
@@ -135,12 +141,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		setConnect(connect, minValuePercentage, maxValuePercentage, percentage, range)
 
-		tooltipMin.innerText = minValue // запись значения в ярлык над минимальным бегунком
-		tooltipMax.innerText = maxValue // запись значения в ярлык над максимальным бегунком
+		if (tooltip) {
+			tooltipMin.innerText = minValue // запись значения в ярлык над минимальным бегунком
+			tooltipMax.innerText = maxValue // запись значения в ярлык над максимальным бегунком
+		}
 
 	}
-
-
 
 	MVC.Controller = function (model, view) {
 
@@ -190,8 +196,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 				}
 
-				let newLowerRange = view.tooltipMin.innerText = Math.round(view.minValuePercentage / view.percentage) + view.minRange // изменение значения в ярлыке
-				let newUpperRange = view.tooltipMax.innerText = Math.round(view.maxValuePercentage / view.percentage) + view.minRange // изменение значения в ярлыке
+				let newLowerRange = Math.round(view.minValuePercentage / view.percentage) + view.minRange // новое нижнее значение
+				let newUpperRange = Math.round(view.maxValuePercentage / view.percentage) + view.minRange // новое верхнее значение
+				if (view.tooltip) {
+					view.tooltipMin.innerText = newLowerRange // изменение значения в ярлыке
+					view.tooltipMax.innerText = newUpperRange // изменение значения в ярлыке
+				}
 				model.setLowerRange(newLowerRange) // передача измененного значения в модель
 				model.setUpperRange(newUpperRange) // передача измененного значения в модель
 
@@ -235,12 +245,17 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	}
 
+	
+
 	const container = document.querySelector(".container2")
 
 	const model = new MVC.Model()
 	const view = new MVC.View(model, container)
 	const controller = new MVC.Controller(model, view)
 
+	console.log(model)
+	console.log(view)
+	console.log(controller)
 
 	//старый код без разделения на слои
 	const slider = document.querySelector(".slider")
