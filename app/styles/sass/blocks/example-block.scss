@@ -159,8 +159,11 @@
 		left: 120%;
 		transform: translate(0, -50%);
 	}
-	&-connect &-tooltip {
+	&-horizontal &-connect &-tooltip {
 		bottom: 165%;
+	}
+	&-vertical &-connect &-tooltip {
+		left: 150%;
 	}
 	&-tooltip {
 		display: block;
@@ -170,6 +173,7 @@
 		background: #fff;
 		color: #000;
 		padding: 5px;
+		user-select: none;
 		text-align: center;
 		white-space: nowrap;
 		font-weight: 700;
