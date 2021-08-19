@@ -87,8 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		let minRange = 0 // начальное значение диапазона
 		let maxRange = 100 // конечное значение диапазона
-		let lowerRange = 0 // значение бегунка минимума
-		let upperRange = 100 // значение бегунка максимума
+		let lowerRange = 30 // значение бегунка минимума
+		let upperRange = 60 // значение бегунка максимума
 		let step = 4 // размер шага
 		let tooltip = true // ярлыки над бегунками
 		let pips = true // шкала со значениями
@@ -135,20 +135,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		let originMin, originMax, handleMin, handleMax
 		let tooltipMin, tooltipMax, tooltipConnect, touchAreaMin, touchAreaMax
-		let percentage
-
+		
 		let target = that.target = createAndPaste(cssClasses.target, rootObject)
 		let base = that.base = createAndPaste(cssClasses.base, target)
+		let baseWidth = that.baseWidth = () => base.offsetWidth
+		let baseHeight = that.baseHeight = () => base.offsetHeight
 		let connects = that.connects = createAndPaste(cssClasses.connects, base)
 		let connect = that.connect = createAndPaste(cssClasses.connect, connects)
+
+		let percentage = that.percentage = function () {
+			if (orientation === "horizontal") {
+				return base.offsetWidth / range // процентное соотношение длины линии относительное заданного диапазона
+			} else {
+				return base.offsetHeight / range // процентное соотношение высоты линии относительное заданного диапазона
+			}
+		}
 
 		function addOrientation(orientation) {
 			if (orientation === "horizontal") {
 				addClass(target, cssClasses.cssPrefix + cssClasses.horizontal)
-				percentage = that.percentage = base.offsetWidth / range // процентное соотношение длины линии относительное заданного диапазона
 			} else {
 				addClass(target, cssClasses.cssPrefix + cssClasses.vertical)
-				percentage = that.percentage = base.offsetHeight / range // процентное соотношение высоты линии относительное заданного диапазона
 			}
 		}
 
@@ -191,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		let minValue, maxValue
 
-		let setPosition = that.setPosition = function (lowerRange, upperRange = null) { // функция установки  бегунков в заданное положение
+		let setPosition = that.setPosition = function (lowerRange, upperRange, percentage) { // функция установки  бегунков в заданное положение
 			if (typeRange === "double") {
 				orientation === "horizontal" ? originMin.style.left = (lowerRange - minRange) * percentage + "px" : originMin.style.top = (lowerRange - minRange) * percentage + "px"
 				orientation === "horizontal" ? originMax.style.left = (upperRange - minRange) * percentage + "px" : originMax.style.top = (upperRange - minRange) * percentage + "px"
@@ -205,31 +212,54 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		}
 
-		setPosition(lowerRange, upperRange)
+		setPosition(lowerRange, upperRange, percentage())
 
 
-		let setConnect = that.setConnect = function (connect, minValue, maxValue, orientation) { // функция изменяющая внутреннюю полосу минимума и максимума
+		let setConnect = that.setConnect = function (connect, minValue, maxValue, orientation, typeRange, baseWidth, baseHeight) { // функция изменяющая внутреннюю полосу минимума и максимума
 			if (orientation === "horizontal") {
-				if (typeConnect === "lower" && typeRange === "single") {
-					connect.style.width = minValue + 'px'
-				} else {
+				if (typeRange === "double") {
 					connect.style.left = minValue + 'px'
 					connect.style.width = maxValue - minValue + 'px'
 				}
+				if (typeRange === "single") {
+					if (typeConnect === "lower") {
+						connect.style.width = minValue + 'px'
+					} else {
+						connect.style.left = minValue + 'px'
+						connect.style.width = baseWidth - minValue + 'px'
+					}
+				}
 			} else {
-				connect.style.top = minValue + 'px'
-				connect.style.height = maxValue - minValue + 'px'
+				if (typeRange === "double") {
+					connect.style.top = minValue + 'px'
+					connect.style.height = maxValue - minValue + 'px'
+				}
+				if (typeRange === "single") {
+					if (typeConnect === "lower") {
+						connect.style.height = minValue + 'px'
+					} else {
+						connect.style.top = minValue + 'px'
+						connect.style.width = baseHeight - minValue + 'px'
+					}
+				}
 			}
-			if (tooltip && typeRange === "double" && connect.offsetWidth < tooltipMin.offsetWidth && connect.offsetHeight < tooltipMin.offsetHeight) {
-				tooltipConnect.style.visibility = "visible"
-				tooltipMin.style.visibility = tooltipMax.style.visibility = "hidden"
-			} else {
-				tooltipConnect.style.visibility = "hidden"
-				tooltipMin.style.visibility = tooltipMax.style.visibility = "visible"
+
+			if (tooltip) {
+				if (typeRange === "double") {
+					if (connect.offsetWidth < tooltipMin.offsetWidth && connect.offsetHeight < tooltipMin.offsetHeight) {
+						tooltipConnect.style.visibility = "visible"
+						tooltipMin.style.visibility = tooltipMax.style.visibility = "hidden"
+					} else {
+						tooltipConnect.style.visibility = "hidden"
+						tooltipMin.style.visibility = tooltipMax.style.visibility = "visible"
+					}
+				} else {
+					tooltipMin.style.visibility = "visible"
+				}
 			}
 		}
 
-		setConnect(connect, minValue, maxValue, orientation)
+		setConnect(connect, minValue, maxValue, orientation, typeRange, baseWidth(), baseHeight())
 
 		let setTooltip = that.setTooltip = function (tooltip, typeRange, tooltipMin, tooltipMax, tooltipConnect, lowerRange, upperRange) {
 			if (tooltip) {
@@ -338,138 +368,126 @@ document.addEventListener('DOMContentLoaded', () => {
 			touchend: "touchend"
 		}
 
-		view.values.forEach((e) => {
-			e.addEventListener("click", (e) => {
+		let minValue = view.minValue
+		let maxValue = view.maxValue
+		let percentage = view.percentage()
+		let connect = view.connect
+		let tooltip = view.tooltip
+		let tooltipMin = view.tooltipMin
+		let tooltipMax = view.tooltipMax
+		let tooltipConnect = view.tooltipConnect
+		let maxRange = model.getProps.maxRange
+		let minRange = model.getProps.minRange
+		let lowerRange = model.getProps.lowerRange
+		let upperRange = model.getProps.upperRange
+		let typeRange = view.typeRange
+		let orientation = view.orientation
+		let base = view.base
+		let baseWidth = view.baseWidth()
+		let baseHeight = view.baseHeight()
+		let step = model.getProps.step
+		let originMin = view.originMin
+		let originMax = view.originMax
 
-				// console.log(e.clientX - getCoords(view.base).left)
-				
-				let lowerRange = view.minValue / view.percentage
-				let upperRange = view.maxValue / view.percentage
+		function getCoords(elem) { // функция получения координат элемента
+			let box = elem.getBoundingClientRect()
+			return {
+				top: box.top + pageYOffset,
+				left: box.left + pageXOffset
+			}
+		}
 
-				if (e.target.innerText - lowerRange > e.target.innerText - upperRange) {
-					model.setLowerRange(parseInt(e.target.innerText))
-					view.setPosition(lowerRange, upperRange)
+		function whichHandle(handle) { // функция определения бегунка
+			if (hasClass(handle, cssClasses.cssPrefix + cssClasses.handleLower)) return 1
+			if (hasClass(handle, cssClasses.cssPrefix + cssClasses.handleUpper)) return 2
+		}
+
+		function limitMove(coords, handle) { // функция ограничения перемещения бегунка в пределах рабочей области
+			coords < 0 ? coords = 0 : coords
+			if (typeRange === "double") {
+				if (whichHandle(handle) === 1) coords > maxValue ? coords = maxValue : coords
+				if (whichHandle(handle) === 2) coords < minValue ? coords = minValue : coords
+			} else {
+				coords > baseWidth ? coords = baseWidth : coords
+			}
+			if (orientation === "horizontal") {
+				coords > baseWidth ? coords = baseWidth : coords
+			} else {
+				coords > baseHeight ? coords = baseHeight : coords
+			}
+			return coords
+		}
+
+		function handleMove(coords, handle) { // функция перемещения бегунка
+			if (orientation === "horizontal") {
+				if (whichHandle(handle) === 1) {
+					originMin.style.left = coords + 'px'
 				} else {
-					model.setUpperRange(parseInt(e.target.innerText))
-					view.setPosition(lowerRange, upperRange)
+					originMax.style.left = coords + 'px'
 				}
-				view.setTooltip(view.tooltip, view.typeRange, view.tooltipMin, view.tooltipMax, view.tooltipConnect, lowerRange, upperRange)
-				view.setConnect(view.connect, lowerRange, upperRange, view.orientation) // изменение внутренней полосы
+			} else {
+				if (whichHandle(handle) === 1) {
+					originMin.style.top = coords + 'px'
+				} else {
+					originMax.style.top = coords + 'px'
+				}
+			}
+			return coords
+		}
 
-				console.log(lowerRange)
-				console.log(upperRange)
-			})
-		})
+		function getOffset (e, step) {
+			let stepPxW = baseWidth / ((maxRange - minRange) / step)
+			let stepPxH = baseHeight / ((maxRange - minRange) / step)
+			let move, moveStep
+			if (orientation === "horizontal") {
+				move = e.pageX - getCoords(base).left
+				step ? moveStep = Math.round(move / stepPxW) * stepPxW : moveStep = null
+			} else {
+				move = e.pageY - getCoords(base).top
+				step ? moveStep = Math.round(move / stepPxH) * stepPxH : moveStep = null
+			}
+			return step ? moveStep : move
+		}
+
+		function convertValue (value) {
+			return Math.round(value / percentage) + minRange
+		}
+
+		// view.values.forEach((e) => {
+		// 	e.addEventListener("click", (e) => {
+		// 		console.log(e.target) 
+		// 	})
+		// })
 
 		let eventStart = function (e) { // событие нажатия на бегунок
-			let handleCoords, shiftX, shiftY, step, stepCount, stepPxW, stepPxH
 			let handle = this
-			step = model.getProps.step
-			console.log(step)
-			if (step) {
-				stepCount = (model.getProps.maxRange - model.getProps.minRange) / step
-				stepPxW = view.base.offsetWidth / stepCount
-				stepPxH = view.base.offsetHeight / stepCount
-			}
 
 			addClass(handle, cssClasses.cssPrefix + cssClasses.active)
 
-			if (handle === view.handleMin) {
-				handleCoords = getCoords(view.originMin) // координаты бегунка
-				shiftX = e.pageX - handleCoords.left // отступ слева
-				shiftY = e.pageY - handleCoords.top // отступ сверху
-			} else {
-				handleCoords = getCoords(view.originMax) // координаты бегунка
-				shiftX = e.pageX - handleCoords.left // отступ слева
-				shiftY = e.pageY - handleCoords.top // отступ сверху
-			}
-
 			let eventMove = function (e) { // событие перемещения бегунка
-				let newLeft = e.pageX - shiftX - getCoords(view.base).left // положение относительно страницы слева
-				let newTop = e.pageY - shiftY - getCoords(view.base).top // положение относительно страницы сверху
-				let stepLeft, stepTop
-				if (step) {
-					stepLeft = Math.round(newLeft / stepPxW) * stepPxW
-					stepTop = Math.round(newTop / stepPxH) * stepPxH
+				let move = getOffset(e, step)
+
+				if (whichHandle(handle) === 1) {
+					move = limitMove(move, handle)
+					minValue = handleMove(move, handle)
 				}
 
-				if (handle === view.handleMin) {
-
-					if (step) {
-						stepLeft < 0 ? stepLeft = 0 : stepLeft
-						stepTop < 0 ? stepTop = 0 : stepTop
-						if (view.typeRange === "double") {
-							stepLeft > view.maxValue ? stepLeft = view.maxValue : stepLeft
-							stepTop > view.maxValue ? stepTop = view.maxValue : stepTop
-						} else {
-							stepLeft > view.base.offsetWidth ? stepLeft = view.base.offsetWidth : stepLeft
-							stepTop > view.base.offsetHeight ? stepTop = view.base.offsetHeight : stepTop
-						}
-						if (view.orientation === "horizontal") {
-							view.originMin.style.left = stepLeft + 'px' // изменение положения бегунка
-							view.minValue = stepLeft // присвоение положения бегунка
-						} else {
-							view.originMin.style.top = stepTop + 'px'
-							view.minValue = stepTop
-						}
-					} else {
-						newLeft < 0 ? newLeft = 0 : newLeft // если бегунок уперся в начало диапазона
-						newTop < 0 ? newTop = 0 : newTop
-						if (view.typeRange === "double") {
-							newLeft > view.maxValue ? newLeft = view.maxValue : newLeft // если бегунок уперся в другой 
-							newTop > view.maxValue ? newTop = view.maxValue : newTop
-						} else {
-							newLeft > view.base.offsetWidth ? newLeft = view.base.offsetWidth : newLeft // если бегунок уперся в конец диапазона
-							newTop > view.base.offsetHeight ? newTop = view.base.offsetHeight : newTop
-						}
-						if (view.orientation === "horizontal") {
-							view.originMin.style.left = newLeft + 'px' // изменение положения бегунка
-							view.minValue = newLeft // присвоение положения бегунка
-						} else {
-							view.originMin.style.top = newTop + 'px'
-							view.minValue = newTop
-						}
-					}
-
-				} else {
-					if (step) {
-						stepLeft < view.minValue ? stepLeft = view.minValue : stepLeft
-						stepTop < view.minValue ? stepTop = view.minValue : stepTop
-						stepLeft > view.base.offsetWidth ? stepLeft = view.base.offsetWidth : stepLeft
-						stepTop > view.base.offsetHeight ? stepTop = view.base.offsetHeight : stepTop
-						if (view.orientation === "horizontal") {
-							view.originMax.style.left = stepLeft + 'px' // изменение положения бегунка
-							view.maxValue = stepLeft // присвоение положения бегунка
-						} else {
-							view.originMax.style.top = stepTop + 'px'
-							view.maxValue = stepTop
-						}
-					} else {
-						newLeft < view.minValue ? newLeft = view.minValue : newLeft // если бегунок уперся в другой бегунок
-						newTop < view.minValue ? newTop = view.minValue : newTop
-						newLeft > view.base.offsetWidth ? newLeft = view.base.offsetWidth : newLeft // если бегунок уперся в конец диапазона
-						newTop > view.base.offsetHeight ? newTop = view.base.offsetHeight : newTop
-						if (view.orientation === "horizontal") {
-							view.originMax.style.left = newLeft + 'px' // изменение положения бегунка
-							view.maxValue = newLeft // присвоение положения бегунка
-						} else {
-							view.originMax.style.top = newTop + 'px'
-							view.maxValue = newTop
-						}
-					}
-
+				if (whichHandle(handle) === 2) {
+					move = limitMove(move, handle)
+					maxValue = handleMove(move, handle)
 				}
 
-				let newLowerRange = Math.round(view.minValue / view.percentage) + view.minRange // новое нижнее значение
-				let newUpperRange = Math.round(view.maxValue / view.percentage) + view.minRange // новое верхнее значение
-
-				view.setTooltip(view.tooltip, view.typeRange, view.tooltipMin, view.tooltipMax, view.tooltipConnect, newLowerRange, newUpperRange)
+				let newLowerRange = convertValue(minValue) // новое нижнее значение
+				let newUpperRange = convertValue(maxValue) // новое верхнее значение
 
 				model.setLowerRange(newLowerRange) // передача измененного значения в модель
 				model.setUpperRange(newUpperRange) // передача измененного значения в модель
 
-				view.setConnect(view.connect, view.minValue, view.maxValue, view.orientation) // изменение внутренней полосы
+				view.setTooltip(tooltip, typeRange, tooltipMin, tooltipMax, tooltipConnect, newLowerRange, newUpperRange)
+				view.setConnect(connect, minValue, maxValue, orientation, typeRange, baseWidth, baseHeight) // изменение внутренней полосы
 
+				view.minValue = minValue
+				view.maxValue = maxValue
 			}
 
 			document.addEventListener(actions.move, eventMove)
@@ -478,13 +496,6 @@ document.addEventListener('DOMContentLoaded', () => {
 				document.removeEventListener(actions.start, eventStart)
 				document.removeEventListener(actions.move, eventMove)
 				removeClass(handle, cssClasses.cssPrefix + cssClasses.active)
-				// if (handle === view.handelMin) {
-				// 	console.log(handleCoords.left, "координата минимуна")
-				// 	console.log(Math.round(view.minValuePercentage / view.percentage) + view.minRange, "Значение минимума")
-				// } else {
-				// 	console.log(handleCoords.left, "координата максимума")
-				// 	console.log(Math.round(view.maxValuePercentage / view.percentage) + view.minRange, "Значение максимума")
-				// }
 			}
 
 			document.addEventListener(actions.end, eventEnd)
@@ -493,19 +504,20 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 
 		window.onresize = function () { // при изменении ширины экрана изменяет положение бегунков
-			view.percentage = view.base.offsetWidth / view.range
-			model.lowerRange = model.getProps.lowerRange
-			model.upperRange = model.getProps.upperRange
-			if (model.getProps.typeRange === "double") {
-				view.minValuePercentage = (model.lowerRange - view.minRange) * view.percentage
-				view.maxValuePercentage = (model.upperRange - view.minRange) * view.percentage
-				view.setPositionLower(model.lowerRange, view.orientation, view.originMin, view.minRange, view.percentage)
-				view.setPositionUpper(model.upperRange, view.orientation, view.originMax, view.minRange, view.percentage)
-			} else {
-				view.minValuePercentage = (model.lowerRange - view.minRange) * view.percentage
-				view.setPositionLower(model.lowerRange, view.orientation, view.originMin, view.minRange, view.percentage)
-			}
-			view.setConnect(view.connect, view.minValuePercentage, view.maxValuePercentage, view.orientation)
+			let lowerRange = model.getProps.lowerRange
+			let upperRange = model.getProps.upperRange
+			let connect = view.connect
+			let minValue = view.minValue
+			let maxValue = view.maxValue
+			let typeRange = view.typeRange
+			let orientation = view.orientation
+			let percentage = view.percentage()
+			let baseWidth = view.baseWidth()
+			let baseHeight = view.baseHeight()
+
+			view.setPosition(lowerRange, upperRange, percentage)
+			view.setConnect(connect, minValue, maxValue, orientation, typeRange, baseWidth, baseHeight)
+			console.log()
 		}
 
 		if (model.getProps.typeRange === "double") {
@@ -518,152 +530,14 @@ document.addEventListener('DOMContentLoaded', () => {
 			view.handleMin.ondragstart = () => false
 		}
 
-		function getCoords(elem) { // функция получения координат элемента
-			let box = elem.getBoundingClientRect()
-			return {
-				top: box.top + pageYOffset,
-				left: box.left + pageXOffset
-			}
-		}
 	}
 
 
 
-	const container = document.querySelector(".container2")
+	const container = document.querySelector(".container")
 
 	const model = new MVC.Model()
 	const view = new MVC.View(model, container)
 	const controller = new MVC.Controller(model, view)
-
-
-
-	//старый код без разделения на слои
-	const slider = document.querySelector(".slider")
-	const base = slider.querySelector(".slider-base")
-	const connect = slider.querySelector(".slider-connect")
-	const sliderLower = slider.querySelectorAll(".slider-origin")[0]
-	const tooltipMin = sliderLower.querySelector(".slider-tooltip")
-	const sliderUpper = slider.querySelectorAll(".slider-origin")[1]
-	const tooltipMax = sliderUpper.querySelector(".slider-tooltip")
-	const sliderWidth = slider.querySelector(".slider-handle").offsetWidth
-	const sliderCoords = getCoords(base) // координаты полосы
-	const start = parseInt(getComputedStyle(base).left) // координаты начала диапазона
-	const end = base.offsetWidth // координаты конца диапазона
-
-	let minRange = 500 // начальное значение диапазона
-	let maxRange = 1000 // конечное значение диапазона
-	let range = maxRange - minRange // длина диапазона
-	let lowerRange = 800 // значение бегунка минимума
-	let upperRange = 900 // значение бегунка максимума
-
-	let percentage = base.offsetWidth / range // процентное соотношение длины линии относительное заданной длины диапазона
-
-	function setPosSliderLower(num) { // функция установки минимального бегунка в заданное положение
-		sliderLower.style.left = (num - minRange) * percentage + "px"
-		return num
-	}
-
-	function setPosSliderUpper(num) { // функция установки маскимального бегунка в заданное положение
-		sliderUpper.style.left = (num - minRange) * percentage + "px"
-		return num
-	}
-
-	let minValue = setPosSliderLower(lowerRange) // задание значения минимального бегунка
-	let maxValue = setPosSliderUpper(upperRange) // задание значения максимального бегунка
-
-	let minValuePercentage = (minValue - minRange) * percentage // относительное значение минимального бегунка
-	let maxValuePercentage = (maxValue - minRange) * percentage // относительное значение максимального бегунка
-
-	function setConnect() { // функция изменяющая внутреннюю полосу минимума и максимума
-		connect.style.transform = `
-			translate(${minValuePercentage / percentage / range * 100}%)
-			scale(${(maxValuePercentage / percentage / range) - (minValuePercentage / percentage / range)}, 1)
-		`
-	}
-
-	setConnect() // изменение внутренней полосы при заданных начальных значениях
-
-	console.log("Минимум - ", minValue, "; Максимум - ", maxValue)
-
-	tooltipMin.innerText = minValue // запись значения в ярлык над минимальным бегунком
-	tooltipMax.innerText = maxValue // запись значения в ярлык над максимальным бегунком
-
-	sliderLower.onmousedown = function (e) { // событие нажатия на бегунок
-		let handlerCoords = getCoords(sliderLower) // координаты бегунка
-		let shiftX = e.pageX - handlerCoords.left // отступ слева
-
-		document.onmousemove = function (e) { // событие перемещения бегунка
-
-			let newLeft = e.pageX - shiftX - sliderCoords.left // положение относительно страницы
-
-			if (newLeft < 0) { // если бегунок уперся в начало диапазона
-				newLeft = 0
-			}
-
-			if (newLeft > maxValuePercentage - sliderWidth) { // если бегунок уперся в другой бегунок
-				newLeft = maxValuePercentage - sliderWidth
-			}
-
-			minValuePercentage = newLeft // присвоение положения бегунка
-			sliderLower.style.left = minValuePercentage + 'px' // изменение положения бегунка
-
-			tooltipMin.innerText = Math.round(minValuePercentage / percentage) + minRange
-			// изменение значения в ярлыке
-
-			setConnect() // изменение внутренней полосы
-		}
-
-		document.onmouseup = function () { // событие отжатия кнопки мыши
-			console.log(handlerCoords.left, "координата минимуна")
-			console.log(Math.round(minValuePercentage / percentage) + minRange, "Значение минимума")
-			document.onmousemove = document.onmouseup = null
-		}
-
-		return false
-	}
-
-	sliderLower.ondragstart = function () {
-		return false
-	}
-
-	sliderUpper.onmousedown = function (e) { // событие нажатия на бегунок
-		let handlerCoords = getCoords(sliderUpper) // координаты бегунка
-		let shiftX = e.pageX - handlerCoords.left // отступ слева
-
-		document.onmousemove = function (e) { // событие перемещения бегунка
-			let newLeft = e.pageX - shiftX - sliderCoords.left // положение относительно страницы
-
-			if (newLeft < minValuePercentage + sliderWidth) { // если бегунок уперся в другой бегунок
-				newLeft = minValuePercentage + sliderWidth
-			}
-
-			if (newLeft > end) { // если бегунок уперся в конец диапазона
-				newLeft = end
-			}
-
-			maxValuePercentage = newLeft // присвоение положения бегунка
-			sliderUpper.style.left = maxValuePercentage + 'px' // изменение положения бегунка
-
-			tooltipMax.innerText = Math.round(maxValuePercentage / percentage) + minRange // изменение значения в ярлыке
-
-			setConnect() // изменение внутренней полосы
-		}
-
-		document.onmouseup = function () { // событие отжатия кнопки мыши
-			console.log(handlerCoords.left, "координата максимума")
-			console.log(Math.round(maxValuePercentage / percentage) + minRange, "Значение максимума")
-			document.onmousemove = document.onmouseup = null
-		}
-
-		return false
-	}
-
-	function getCoords(elem) { // функция получения координа элемента
-		let box = elem.getBoundingClientRect()
-		return {
-			top: box.top + pageYOffset,
-			left: box.left + pageXOffset
-		}
-	}
 
 })
