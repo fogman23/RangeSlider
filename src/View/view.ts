@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import './view.scss';
 
-export default class View {
+export default class SliderView implements View {
   private $container: JQuery;
   private $target: JQuery;
   private $base: JQuery;
@@ -16,7 +16,7 @@ export default class View {
     this.isRendered = false;
   }
 
-  render(value: number): void {
+  render(data: View.Data): void {
     if (!this.isRendered) {
       this.$container.append(this.$target);
       this.$target.append(this.$base);
@@ -27,6 +27,8 @@ export default class View {
     }
     
   }
+
+  update(data: View.Data): void {}
 
   addObserver(observer: View.Observer): void {
     this.observers.add(observer);

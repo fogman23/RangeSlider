@@ -14,7 +14,7 @@ describe("View", () => {
     keys: Set<string>,
     updateFn: jest.Mock,
     anotherUpdateFn: jest.Mock,
-    newValue: number,
+    data: View.Data,
     tempOffsetWidth: number,
     tempOffsetLeft: number;
 
@@ -22,7 +22,11 @@ describe("View", () => {
     testView = new View(testNode);
     updateFn = jest.fn(x => x + 1);
     anotherUpdateFn = jest.fn(x => x + 2);
-    newValue = 42;
+    data = {
+      value: 20,
+      step: 2,
+      interval: [0, 100]
+    };
     observer = {
       update: updateFn
     };
@@ -53,8 +57,8 @@ describe("View", () => {
   })
 
   test('render should append div.slider-target to container and append div.slider-base to div.slider-target only once', () => {
-    testView.render(newValue);
-    expect(() => testView.render(newValue)).toThrowError('View is already rendered!')
+    testView.render(data);
+    expect(() => testView.render(data)).toThrowError('View is already rendered!')
     expect($('.slider-target').length).toBe(1)
     expect($('.slider-base').length).toBe(1)
   })
@@ -91,7 +95,7 @@ describe("View", () => {
   })
 
   test('attachEventListener added eventListener to target, which calls notify fn', () => {
-    testView.render(newValue);
+    testView.render(data);
     testView.addObserver(observer);
     testView.addObserver(anotherObserver);
 

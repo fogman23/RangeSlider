@@ -1,27 +1,19 @@
-import Model, { ModelOptions } from '../Model/model';
-import View from '../View/view';
-import Presenter from '../Presenter/presenter';
-
-interface AppOptions {
-  minValue: number,
-  maxValue: number,
-  step: number,
-  lowerValue: number,
-  upperValue: null | number
-}
+import SliderModel from '../Model/model';
+import SliderView from '../View/view';
+import SliderPresenter from '../Presenter/presenter';
 
 export default class App {
-  private options: AppOptions;
-  private model: Model;
-  private view: View;
-  private presenter: Presenter;
-  private $container: JQuery
+  private options: App.Options;
+  private model: SliderModel;
+  private view: SliderView;
+  private presenter: SliderPresenter;
+  private $container: JQuery;
 
-  constructor(options: AppOptions, container: HTMLElement) {
+  constructor(options: App.Options, container: HTMLElement) {
     this.options = options;
     this.$container = $(container);
-    this.model = new Model(options);
-    this.presenter = new Presenter();
-    this.view = new View(container);
+    this.model = new SliderModel(this.options);
+    this.view = new SliderView(container);
+    this.presenter = new SliderPresenter(this.model, this.view);
   }
 }

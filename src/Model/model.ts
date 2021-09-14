@@ -1,4 +1,4 @@
-export default class Model {
+export default class SliderModel implements Model {
   private minValue: number;
   private maxValue: number;
   private step: number;
@@ -6,20 +6,13 @@ export default class Model {
   private upperValue: number | null;
   private observers: Set<Object>;
 
-  constructor(options?: Model.Options) {
-    if (options) {
-      this.minValue = options.minValue;
-      this.maxValue = options.maxValue;
-      this.step = options.step;
-      this.lowerValue = options.lowerValue;
-      this.upperValue = options.upperValue;
-    } else {
-      this.minValue = 0;
-      this.maxValue = 100;
-      this.step = 1;
-      this.lowerValue = 10;
-      this.upperValue = null;
-    }
+  constructor(options: Model.Options) {
+    this.minValue = options.minValue;
+    this.maxValue = options.maxValue;
+    this.step = options.step;
+    this.lowerValue = options.lowerValue;
+    this.upperValue = options.upperValue;
+
     this.observers = new Set();
   }
 
@@ -31,30 +24,22 @@ export default class Model {
     this.observers.delete(observer);
   }
 
+  getState(): Model.Options {
+    return {
+      minValue: this.minValue,
+      maxValue: this.maxValue,
+      step: this.step,
+      lowerValue: this.lowerValue,
+      upperValue: this.upperValue,
+    }
+  }
+
+  updateState(state: Model.Options): void {}
+
   notify(): void {
-    this.observers.forEach( (observer: Model.Observer): void => {
+    this.observers.forEach((observer: Model.Observer): void => {
       observer.update();
-    })
-  }
-
-  getValue(): number {
-    return this.lowerValue;
-  }
-
-  incValue(): void {
-    const { maxValue, step } = this;
-    const newValue = this.lowerValue + step;
-    newValue >= maxValue
-      ? this.setValue(maxValue)
-      : this.setValue(newValue);
-  }
-
-  decValue(): void {
-    const { minValue, step } = this;
-    const newValue = this.lowerValue - step;
-    newValue <= minValue
-      ? this.setValue(minValue)
-      : this.setValue(newValue);
+    });
   }
 
   setValue(value: number): void {
