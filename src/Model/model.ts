@@ -6,12 +6,17 @@ interface Options {
   upperValue: number | null;
 }
 
+interface Observer {
+  update: () => {}
+}
+
 export default class Model {
   private minValue: number;
   private maxValue: number;
   private step: number;
   private lowerValue: number;
   private upperValue: number | null;
+  private observers: Set<Object>;
 
   constructor(options?: Options) {
     if (options) {
@@ -27,6 +32,21 @@ export default class Model {
       this.lowerValue = 10;
       this.upperValue = null;
     }
+    this.observers = new Set();
+  }
+
+  addObserver(observer: Observer): void {
+    this.observers.add(observer);
+  }
+
+  removeObserver(observer: Observer): void {
+    this.observers.delete(observer);
+  }
+
+  notify(): void {
+    this.observers.forEach( (observer: Observer): void => {
+      observer.update();
+    })
   }
 
   getValue(): number {
@@ -34,17 +54,19 @@ export default class Model {
   }
 
   incValue(): void {
-    const newValue = this.lowerValue + this.step;
-    newValue >= this.maxValue
-      ? (this.lowerValue = this.maxValue)
-      : (this.lowerValue = newValue);
+    const { maxValue, step } = this;
+    const newValue = this.lowerValue + step;
+    newValue >= maxValue
+      ? this.setValue(maxValue)
+      : this.setValue(newValue);
   }
 
   decValue(): void {
-    const newValue = this.lowerValue - this.step;
-    newValue <= this.minValue
-      ? (this.lowerValue = this.minValue)
-      : (this.lowerValue = newValue);
+    const { minValue, step } = this;
+    const newValue = this.lowerValue - step;
+    newValue <= minValue
+      ? this.setValue(minValue)
+      : this.setValue(newValue);
   }
 
   setValue(value: number): void {
@@ -52,10 +74,11 @@ export default class Model {
       throw new RangeError("заданное значение больше максимального");
     } else if (value < this.minValue) {
       throw new RangeError("заданное значение меньше минимального");
-    } else {
+    } else if (value !== this.lowerValue) {
       this.lowerValue = value;
+      this.notify();
     }
   }
 }
 
-export { Options };
+export { Options, Observer };

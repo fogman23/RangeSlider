@@ -1,18 +1,34 @@
 import Model from '../model';
-import { Options } from '../model';
+import { Options, Observer } from '../model';
 
 describe('model', () => {
-  let testModel: Model;
   const testOptions: Options = {
     minValue: 0,
     maxValue: 50,
     step: 2,
     lowerValue: 5,
     upperValue: null,
-  }
+  };
+  let testModel: Model,
+    updateFn: () => {},
+    anotherUpdateFn: () => {},
+    observer: Observer,
+    anotherObserver: Observer;
 
   beforeEach( () => {
     testModel = new Model(testOptions);
+    updateFn = jest.fn();
+    anotherUpdateFn = jest.fn();
+    observer = {
+      update: updateFn
+    };
+    anotherObserver = {
+      update: anotherUpdateFn
+    }
+  })
+
+  afterEach( () => {
+    testModel = null;
   })
 
   test('create instanse of Model without options', () => {
@@ -84,5 +100,65 @@ describe('model', () => {
     expect(() => {
       testModel.setValue(-13);
     }).toThrowError("заданное значение меньше минимального");
+  })
+
+  test('addObserver should added observer to this.observers', () => {
+    expect(testModel).toHaveProperty('observers');
+    testModel.addObserver(observer);
+
+    const entries = Object.entries(testModel);
+    entries.forEach((entry: [string, any], index: number) => {
+      if (entry[0] === 'observers') {
+        expect(entry[1].has(observer)).toBeTruthy();
+      }
+    });
+  })
+
+  test('removeObserver should removed observer', () => {
+    expect(testModel).toHaveProperty('observers');
+    const entries = Object.entries(testModel);
+
+    testModel.addObserver(observer);
+    entries.forEach((entry: [string, any], index: number) => {
+      if (entry[0] === 'observers') {
+        expect(entry[1].has(observer)).toBeTruthy();
+      }
+    });
+
+    testModel.removeObserver(observer);
+    entries.forEach((entry: [string, any], index: number) => {
+      if (entry[0] === 'observers') {
+        expect(entry[1].has(observer)).toBeFalsy();
+      }
+    });
+  })
+
+  test('if the lowerValue changes, the model should notyfy observers', () => {
+    testModel.addObserver(observer);
+    testModel.addObserver(anotherObserver);
+
+    testModel.incValue();
+    expect(updateFn).toHaveBeenCalledTimes(1);
+    testModel.incValue();
+    testModel.incValue();
+    testModel.incValue();
+    expect(updateFn).toHaveBeenCalledTimes(4);
+    expect(anotherUpdateFn).toHaveBeenCalledTimes(4);
+
+    testModel.decValue();
+    expect(updateFn).toHaveBeenCalledTimes(5);
+    expect(anotherUpdateFn).toHaveBeenCalledTimes(5);
+
+    testModel.setValue(10);
+    expect(updateFn).toHaveBeenCalledTimes(6);
+    expect(anotherUpdateFn).toHaveBeenCalledTimes(6);
+  })
+
+  test('if the lowerValue does not changes, the model should not notify observers', () => {
+    testModel.addObserver(observer);
+    const currentLowerValue = testModel.getValue();
+
+    testModel.setValue(currentLowerValue);
+    expect(updateFn).not.toHaveBeenCalled();
   })
 })
