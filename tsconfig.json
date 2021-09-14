@@ -6,6 +6,8 @@
     "target": "es5",
     "noImplicitAny": true,
     "allowJs": true,
+    "allowSyntheticDefaultImports" : true,
+    "esModuleInterop": true,
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

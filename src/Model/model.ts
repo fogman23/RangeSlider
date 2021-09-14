@@ -1,15 +1,3 @@
-interface Options {
-  minValue: number;
-  maxValue: number;
-  step: number;
-  lowerValue: number;
-  upperValue: number | null;
-}
-
-interface Observer {
-  update: () => {}
-}
-
 export default class Model {
   private minValue: number;
   private maxValue: number;
@@ -18,7 +6,7 @@ export default class Model {
   private upperValue: number | null;
   private observers: Set<Object>;
 
-  constructor(options?: Options) {
+  constructor(options?: Model.Options) {
     if (options) {
       this.minValue = options.minValue;
       this.maxValue = options.maxValue;
@@ -35,16 +23,16 @@ export default class Model {
     this.observers = new Set();
   }
 
-  addObserver(observer: Observer): void {
+  addObserver(observer: Model.Observer): void {
     this.observers.add(observer);
   }
 
-  removeObserver(observer: Observer): void {
+  removeObserver(observer: Model.Observer): void {
     this.observers.delete(observer);
   }
 
   notify(): void {
-    this.observers.forEach( (observer: Observer): void => {
+    this.observers.forEach( (observer: Model.Observer): void => {
       observer.update();
     })
   }
@@ -80,5 +68,3 @@ export default class Model {
     }
   }
 }
-
-export { Options, Observer };

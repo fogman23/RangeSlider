@@ -1,8 +1,7 @@
 import Model from '../model';
-import { Options, Observer } from '../model';
 
 describe('model', () => {
-  const testOptions: Options = {
+  const testOptions: Model.Options = {
     minValue: 0,
     maxValue: 50,
     step: 2,
@@ -10,10 +9,10 @@ describe('model', () => {
     upperValue: null,
   };
   let testModel: Model,
-    updateFn: () => {},
-    anotherUpdateFn: () => {},
-    observer: Observer,
-    anotherObserver: Observer;
+    updateFn: jest.Mock,
+    anotherUpdateFn: jest.Mock,
+    observer: Model.Observer,
+    anotherObserver: Model.Observer;
 
   beforeEach( () => {
     testModel = new Model(testOptions);
@@ -107,7 +106,7 @@ describe('model', () => {
     testModel.addObserver(observer);
 
     const entries = Object.entries(testModel);
-    entries.forEach((entry: [string, any], index: number) => {
+    entries.forEach((entry: [string, any]) => {
       if (entry[0] === 'observers') {
         expect(entry[1].has(observer)).toBeTruthy();
       }
@@ -119,14 +118,14 @@ describe('model', () => {
     const entries = Object.entries(testModel);
 
     testModel.addObserver(observer);
-    entries.forEach((entry: [string, any], index: number) => {
+    entries.forEach((entry: [string, any]) => {
       if (entry[0] === 'observers') {
         expect(entry[1].has(observer)).toBeTruthy();
       }
     });
 
     testModel.removeObserver(observer);
-    entries.forEach((entry: [string, any], index: number) => {
+    entries.forEach((entry: [string, any]) => {
       if (entry[0] === 'observers') {
         expect(entry[1].has(observer)).toBeFalsy();
       }

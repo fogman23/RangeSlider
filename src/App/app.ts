@@ -1,8 +1,8 @@
-import Model from '../Model/model';
+import Model, { ModelOptions } from '../Model/model';
 import View from '../View/view';
 import Presenter from '../Presenter/presenter';
 
-interface Options {
+interface AppOptions {
   minValue: number,
   maxValue: number,
   step: number,
@@ -11,17 +11,17 @@ interface Options {
 }
 
 export default class App {
-  private options: Options;
+  private options: AppOptions;
   private model: Model;
   private view: View;
   private presenter: Presenter;
   private $container: JQuery
 
-  constructor(options: Options, $container: JQuery) {
+  constructor(options: AppOptions, container: HTMLElement) {
     this.options = options;
-    this.$container = $container;
-    this.model = new Model();
+    this.$container = $(container);
+    this.model = new Model(options);
     this.presenter = new Presenter();
-    this.view = new View();
+    this.view = new View(container);
   }
 }
