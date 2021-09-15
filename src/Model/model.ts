@@ -91,4 +91,10 @@ export default class SliderModel implements Model {
       this.maxValue = value;
     }
   }
+
+  setStep(value: number): void {
+    if (value > 0) {
+      this.step = value;
+    }
+  }
 }

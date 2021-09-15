@@ -79,11 +79,21 @@ describe("model", () => {
     expect(testModel).toHaveProperty('maxValue', 50);
   })
 
-  test('the set value should be a multiple of step', () => {
+  test('setValue should be a multiple of step', () => {
     expect(testModel).toHaveProperty('lowerValue', 10);
     testModel.setValue(13);
     expect(testModel.getState().lowerValue).toBe(12);
   });
+
+  test('setStep should change this.step', () => {
+    testModel.setStep(5);
+    expect(testModel.getState().step).toBe(5);
+  });
+
+  test('step must be greater than 0', () => {
+    testModel.setStep(-2);
+    expect(testModel.getState().step).toBe(2);
+  })
 
   test('if the argument of the setValue fn is greater than the maxValue, then value should equal maxValue', () => {
     const maxValue = testModel.getState().maxValue;
