@@ -14,6 +14,7 @@ export default class SliderModel implements Model {
     this.upperValue = options.upperValue;
 
     this.observers = new Set();
+    this.setValue(options.lowerValue);
   }
 
   addObserver(observer: Model.Observer): void {
@@ -31,25 +32,63 @@ export default class SliderModel implements Model {
       step: this.step,
       lowerValue: this.lowerValue,
       upperValue: this.upperValue,
+    };
+  }
+
+  updateState(state: Model.Options): void {
+    const { maxValue, minValue, step, lowerValue } = state;
+
+    this.maxValue = maxValue ? maxValue : this.maxValue;
+    this.minValue = minValue ? minValue : this.minValue;
+    this.step = step ? step : this.step;
+
+    this.setValue(lowerValue);
+  }
+
+  notify(): void {
+    if (this.observers.size !== 0) {
+      this.observers.forEach((observer: Model.Observer): void => {
+        observer.update();
+      });
     }
   }
 
-  updateState(state: Model.Options): void {}
+  setValue(value: number): void {
+    const { minValue, maxValue, step } = this;
 
-  notify(): void {
-    this.observers.forEach((observer: Model.Observer): void => {
-      observer.update();
-    });
+    if (!this.lowerValue) {
+      this.lowerValue = this.minValue;
+    }
+
+    const valueMultipleStep =
+      (value % step) / step > 0.5
+        ? value - (value % step) + step
+        : value - (value % step);
+
+    if (this.lowerValue === valueMultipleStep) {
+      return;
+    }
+
+    if (valueMultipleStep >= maxValue) {
+      this.lowerValue = maxValue;
+    } else if (valueMultipleStep <= minValue) {
+      this.lowerValue = minValue;
+    } else {
+      this.lowerValue = valueMultipleStep;
+    }
+
+    this.notify();
   }
 
-  setValue(value: number): void {
-    if (value > this.maxValue) {
-      throw new RangeError("заданное значение больше максимального");
-    } else if (value < this.minValue) {
-      throw new RangeError("заданное значение меньше минимального");
-    } else if (value !== this.lowerValue) {
-      this.lowerValue = value;
-      this.notify();
+  setMinValue(value: number): void {
+    if (value < this.maxValue) {
+      this.minValue = value;
+    }
+  }
+
+  setMaxValue(value: number): void {
+    if (value > this.minValue) {
+      this.maxValue = value;
     }
   }
 }
