@@ -1,20 +1,19 @@
 export default class SliderModel implements Model {
-  private minValue: number;
-  private maxValue: number;
-  private step: number;
-  private lowerValue: number;
-  private upperValue: number | null;
+  private _minValue: number;
+  private _maxValue: number;
+  private _step: number;
+  private _lowerValue: number;
   private observers: Set<Object>;
+  // private _upperValue: number | null;
 
   constructor(options: Model.Options) {
     this.minValue = options.minValue;
     this.maxValue = options.maxValue;
     this.step = options.step;
     this.lowerValue = options.lowerValue;
-    this.upperValue = options.upperValue;
-
     this.observers = new Set();
-    this.setValue(options.lowerValue);
+
+    // this.upperValue = options.upperValue;
   }
 
   addObserver(observer: Model.Observer): void {
@@ -27,22 +26,87 @@ export default class SliderModel implements Model {
 
   getState(): Model.Options {
     return {
-      minValue: this.minValue,
-      maxValue: this.maxValue,
-      step: this.step,
-      lowerValue: this.lowerValue,
-      upperValue: this.upperValue,
+      minValue: this._minValue,
+      maxValue: this._maxValue,
+      step: this._step,
+      lowerValue: this._lowerValue,
+      // upperValue: this._upperValue,
     };
   }
 
   updateState(state: Model.Options): void {
     const { maxValue, minValue, step, lowerValue } = state;
 
-    this.maxValue = maxValue ? maxValue : this.maxValue;
-    this.minValue = minValue ? minValue : this.minValue;
-    this.step = step ? step : this.step;
+    this.maxValue = maxValue !== undefined ? maxValue : this._maxValue;
+    this.minValue = minValue !== undefined ? minValue : this._minValue;
+    this.step = step !== undefined ? step : this._step;
+    this.lowerValue = lowerValue !== undefined ? lowerValue :this._lowerValue;
+  }
 
-    this.setValue(lowerValue);
+  get lowerValue() {
+    return this._lowerValue
+  }
+
+  set lowerValue(value: number) {
+    const { _minValue, _maxValue, _step } = this;
+
+    if (this._lowerValue === undefined) {
+      this._lowerValue = this._minValue;
+    }
+
+    const valueMultipleStep =
+      (value % _step) / _step > 0.5
+        ? value - (value % _step) + _step
+        : value - (value % _step);
+
+    if (this._lowerValue === valueMultipleStep) {
+      return;
+    }
+
+    if (valueMultipleStep >= _maxValue) {
+      this._lowerValue = _maxValue;
+    } else if (valueMultipleStep <= _minValue) {
+      this._lowerValue = _minValue;
+    } else {
+      this._lowerValue = valueMultipleStep;
+    }
+
+    if (this.observers !== undefined) {
+      this.notify();
+    }
+  }
+
+  get minValue() {
+    return this._minValue;
+  }
+
+  set minValue(value: number) {
+    if (this._maxValue === undefined || value < this._maxValue) {
+      this._minValue = value;
+    }
+  }
+
+  get maxValue() {
+    return this._maxValue;
+  }
+
+  set maxValue(value: number) {
+    if (this._minValue === undefined || value > this._minValue) {
+      this._maxValue = value;
+    }
+  }
+
+  get step() {
+    return this._step;
+  }
+
+  set step(value: number) {
+    if (value > 0) {
+      this._step = value;
+      if (this._lowerValue !== undefined) {
+        this.lowerValue = this._lowerValue;
+      }
+    }
   }
 
   notify(): void {
@@ -53,48 +117,4 @@ export default class SliderModel implements Model {
     }
   }
 
-  setValue(value: number): void {
-    const { minValue, maxValue, step } = this;
-
-    if (!this.lowerValue) {
-      this.lowerValue = this.minValue;
-    }
-
-    const valueMultipleStep =
-      (value % step) / step > 0.5
-        ? value - (value % step) + step
-        : value - (value % step);
-
-    if (this.lowerValue === valueMultipleStep) {
-      return;
-    }
-
-    if (valueMultipleStep >= maxValue) {
-      this.lowerValue = maxValue;
-    } else if (valueMultipleStep <= minValue) {
-      this.lowerValue = minValue;
-    } else {
-      this.lowerValue = valueMultipleStep;
-    }
-
-    this.notify();
-  }
-
-  setMinValue(value: number): void {
-    if (value < this.maxValue) {
-      this.minValue = value;
-    }
-  }
-
-  setMaxValue(value: number): void {
-    if (value > this.minValue) {
-      this.maxValue = value;
-    }
-  }
-
-  setStep(value: number): void {
-    if (value > 0) {
-      this.step = value;
-    }
-  }
 }
