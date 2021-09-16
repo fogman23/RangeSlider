@@ -117,9 +117,21 @@ describe("model", () => {
     expect(testModel.step).toBe(5);
   });
 
-  test('step must be greater than 0', () => {
+  test('step should be greater than 0', () => {
     testModel.step = -2;
     expect(testModel.step).toBe(2);
+  })
+
+  test('changing step should change lowerValue and upperValue', () => {
+    testModel.step = 12;
+    expect(testModel.lowerValue).toBe(12);
+    testModel.step = 25;
+    expect(testModel.lowerValue).toBe(0);
+
+    testModelWithUpperValue.step = 8;
+    expect(testModelWithUpperValue.upperValue).toBe(16);
+    testModelWithUpperValue.step = 11;
+    expect(testModelWithUpperValue.upperValue).toBe(11);
   })
 
   test('if the argument of the set lowerValue and upperValue is greater than the maxValue, then value should equal maxValue', () => {
@@ -187,15 +199,33 @@ describe("model", () => {
 
     expect(updateFn).toHaveBeenCalledTimes(5);
     expect(anotherUpdateFn).toHaveBeenCalledTimes(5);
+
+    testModelWithUpperValue.addObserver(observer);
+    testModelWithUpperValue.addObserver(anotherObserver);
+
+    testModelWithUpperValue.minValue = -25;
+    testModelWithUpperValue.maxValue = 75;
+    testModelWithUpperValue.lowerValue = -10;
+    testModelWithUpperValue.upperValue = 25;
+    expect(testModelWithUpperValue.upperValue).toBe(24);
+    testModelWithUpperValue.step = 5;
+    expect(testModelWithUpperValue.upperValue).toBe(25);
+
+    expect(updateFn).toHaveBeenCalledTimes(10);
+    expect(anotherUpdateFn).toHaveBeenCalledTimes(10);
   });
 
-  test('if the lowerValue does not changes, the model should not notify observers', () => {
+  test('if the values does not changes, the model should not notify observers', () => {
     testModel.addObserver(observer);
 
     testModel.lowerValue = 10;
     expect(updateFn).not.toHaveBeenCalled();
 
     testModel.lowerValue = testModel.getState().lowerValue;
+    expect(updateFn).not.toHaveBeenCalled();
+
+    testModelWithUpperValue.addObserver(observer);
+    testModelWithUpperValue.upperValue = 20;
     expect(updateFn).not.toHaveBeenCalled();
   });
 
@@ -247,6 +277,10 @@ describe("model", () => {
     expect(testModel.lowerValue).toBe(-75);
     expect(testModel.step).toBe(15);
     expect(testModel.maxValue).toBe(300);
+
+    expect(testModel.upperValue).toBeUndefined();
+    testModel.updateState({upperValue: 30});
+    expect(testModel.upperValue).toBe(30);
   })
 
   test('after updating the model with the updateState(), the notify() should be called only once', () => {
@@ -262,5 +296,10 @@ describe("model", () => {
 
     expect(updateFn).toHaveBeenCalledTimes(1);
     expect(anotherUpdateFn).toHaveBeenCalledTimes(1);
+
+    testModel.updateState({upperValue: 30});
+
+    expect(updateFn).toHaveBeenCalledTimes(2);
+    expect(anotherUpdateFn).toHaveBeenCalledTimes(2);
   })
 });

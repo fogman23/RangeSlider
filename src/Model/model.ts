@@ -44,12 +44,21 @@ export default class SliderModel implements Model {
 
     this.readyNotify = false;
 
-    this.maxValue = maxValue !== undefined ? maxValue : this._maxValue;
-    this.minValue = minValue !== undefined ? minValue : this._minValue;
-    this.step = step !== undefined ? step : this._step;
-    this.lowerValue = lowerValue !== undefined ? lowerValue :this._lowerValue;
-    this.upperValue = upperValue !== undefined ? upperValue :this._upperValue;
-
+    if (maxValue !== undefined) {
+      this.maxValue = maxValue;
+    } 
+    if (minValue !== undefined) {
+      this.minValue = minValue;
+    }
+    if (step !== undefined) {
+      this.step = step;
+    } 
+    if (lowerValue !== undefined) {
+      this.lowerValue = lowerValue;
+    }
+    if (upperValue !== undefined) {
+      this.upperValue = upperValue;
+    }
     this.readyNotify = true;
     this.notify();
   }
@@ -59,14 +68,10 @@ export default class SliderModel implements Model {
   }
 
   set lowerValue(value: number) {
-    const { _minValue, _maxValue, _step } = this;
+    const { _minValue, _maxValue, _step, _lowerValue: oldValue } = this;
 
     if (this._lowerValue === undefined) {
       this._lowerValue = this._minValue;
-    }
-
-    if (this._lowerValue === value && this.isUpdated) {
-      return;
     }
 
     const valueMultipleStep =
@@ -85,7 +90,7 @@ export default class SliderModel implements Model {
       this.isUpdated = false;
     }
 
-    if (this.observers !== undefined && this._upperValue === undefined) {
+    if (oldValue !== this._lowerValue) {
       this.notify();
     }
   }
@@ -95,11 +100,7 @@ export default class SliderModel implements Model {
   }
 
   set upperValue(value: number) {
-    const { _minValue, _maxValue, _step } = this;
-
-    if (this._upperValue === value && this.isUpdated) {
-      return;
-    }
+    const { _minValue, _maxValue, _step, _upperValue: oldValue } = this;
 
     const valueMultipleStep =
       (value % _step) / _step > 0.5
@@ -117,7 +118,7 @@ export default class SliderModel implements Model {
       this.isUpdated = false;
     }
 
-    if (this.observers !== undefined) {
+    if (oldValue !== this._upperValue) {
       this.notify();
     }
   }
@@ -136,6 +137,9 @@ export default class SliderModel implements Model {
       if (this._upperValue !== undefined) {
         this.upperValue = this._upperValue;
       }
+      if (!this.isUpdated) {
+        this.notify();
+      }
     }
   }
 
@@ -153,6 +157,9 @@ export default class SliderModel implements Model {
       if (this._upperValue !== undefined) {
         this.upperValue = this._upperValue;
       }
+      if (!this.isUpdated) {
+        this.notify();
+      }
     }
   }
 
@@ -168,13 +175,16 @@ export default class SliderModel implements Model {
         this.lowerValue = this._lowerValue;
       }
       if (this._upperValue !== undefined) {
-        this._upperValue = this._upperValue;
+        this.upperValue = this._upperValue;
+      }
+      if (!this.isUpdated) {
+        this.notify();
       }
     }
   }
 
   notify(): void {
-    if (this.observers.size !== 0 && this.readyNotify) {
+    if (this.observers !== undefined && this.observers.size !== 0 && this.readyNotify) {
       this.observers.forEach((observer: Model.Observer): void => {
         observer.update();
       });
