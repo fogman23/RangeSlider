@@ -302,4 +302,47 @@ describe("model", () => {
     expect(updateFn).toHaveBeenCalledTimes(2);
     expect(anotherUpdateFn).toHaveBeenCalledTimes(2);
   })
+
+  test('setter argument should be valid', () => {
+    testModel.lowerValue = undefined;
+    expect(testModel.lowerValue).toBe(10);
+    testModel.lowerValue = null;
+    expect(testModel.lowerValue).toBe(10);
+    testModel.lowerValue = Infinity;
+    expect(testModel.lowerValue).toBe(10);
+
+    testModel.upperValue = 13;
+    testModel.upperValue = undefined;
+    expect(testModel.upperValue).toBe(12);
+    testModel.upperValue = null;
+    expect(testModel.upperValue).toBe(12);
+    testModel.upperValue = -Infinity;
+    expect(testModel.upperValue).toBe(12);
+
+    testModel.minValue = 10;
+    testModel.minValue = undefined;
+    expect(testModel.minValue).toBe(10);
+    testModel.minValue = null;
+    expect(testModel.minValue).toBe(10);
+    testModel.minValue = 10 / 0;
+    expect(testModel.minValue).toBe(10);
+
+    testModel.maxValue = 100;
+    testModel.maxValue = undefined;
+    expect(testModel.maxValue).toBe(100);
+    testModel.maxValue = null;
+    expect(testModel.maxValue).toBe(100);
+    testModel.maxValue = Infinity - 20;
+    expect(testModel.maxValue).toBe(100);
+
+    testModel.step = 3;
+    testModel.step = undefined;
+    expect(testModel.step).toBe(3);
+    testModel.step = null;
+    expect(testModel.step).toBe(3);
+    testModel.step = 5 + Infinity;
+    expect(testModel.step).toBe(3);
+    testModel.step = NaN;
+    expect(testModel.step).toBe(3);
+  })
 });
