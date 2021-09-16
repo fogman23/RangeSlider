@@ -3,7 +3,7 @@ export default class SliderModel implements Model {
   private _maxValue: number;
   private _step: number;
   private _lowerValue: number;
-  // private _upperValue: number | null;
+  private _upperValue: number | null;
   private observers: Set<Object>;
   private isUpdated: boolean;
   private readyNotify: boolean;
@@ -13,7 +13,9 @@ export default class SliderModel implements Model {
     this.maxValue = options.maxValue;
     this.step = options.step;
     this.lowerValue = options.lowerValue;
-    // this.upperValue = options.upperValue;
+    if (options.upperValue !== undefined) {
+      this.upperValue = options.upperValue;
+    }
     this.observers = new Set();
     this.isUpdated = true;
     this.readyNotify = true;
@@ -33,12 +35,12 @@ export default class SliderModel implements Model {
       maxValue: this._maxValue,
       step: this._step,
       lowerValue: this._lowerValue,
-      // upperValue: this._upperValue,
+      upperValue: this._upperValue,
     };
   }
 
   updateState(state: Model.Options): void {
-    const { maxValue, minValue, step, lowerValue } = state;
+    const { maxValue, minValue, step, lowerValue, upperValue } = state;
 
     this.readyNotify = false;
 
@@ -46,6 +48,7 @@ export default class SliderModel implements Model {
     this.minValue = minValue !== undefined ? minValue : this._minValue;
     this.step = step !== undefined ? step : this._step;
     this.lowerValue = lowerValue !== undefined ? lowerValue :this._lowerValue;
+    this.upperValue = upperValue !== undefined ? upperValue :this._upperValue;
 
     this.readyNotify = true;
     this.notify();
@@ -82,6 +85,38 @@ export default class SliderModel implements Model {
       this.isUpdated = false;
     }
 
+    if (this.observers !== undefined && this._upperValue === undefined) {
+      this.notify();
+    }
+  }
+
+  get upperValue() {
+    return this._upperValue;
+  }
+
+  set upperValue(value: number) {
+    const { _minValue, _maxValue, _step } = this;
+
+    if (this._upperValue === value && this.isUpdated) {
+      return;
+    }
+
+    const valueMultipleStep =
+      (value % _step) / _step > 0.5
+        ? value - (value % _step) + _step
+        : value - (value % _step);
+
+    if (valueMultipleStep >= _maxValue) {
+      this._upperValue = _maxValue;
+      this.isUpdated = false;
+    } else if (valueMultipleStep <= _minValue) {
+      this._upperValue = _minValue;
+      this.isUpdated = false;
+    } else {
+      this._upperValue = valueMultipleStep;
+      this.isUpdated = false;
+    }
+
     if (this.observers !== undefined) {
       this.notify();
     }
@@ -96,7 +131,10 @@ export default class SliderModel implements Model {
       this._minValue = value;
       this.isUpdated = false;
       if (this._lowerValue !== undefined) {
-        this.lowerValue = this._lowerValue
+        this.lowerValue = this._lowerValue;
+      }
+      if (this._upperValue !== undefined) {
+        this.upperValue = this._upperValue;
       }
     }
   }
@@ -110,7 +148,10 @@ export default class SliderModel implements Model {
       this._maxValue = value;
       this.isUpdated = false;
       if (this._lowerValue !== undefined) {
-        this.lowerValue = this._lowerValue
+        this.lowerValue = this._lowerValue;
+      }
+      if (this._upperValue !== undefined) {
+        this.upperValue = this._upperValue;
       }
     }
   }
@@ -125,6 +166,9 @@ export default class SliderModel implements Model {
       this.isUpdated = false;
       if (this._lowerValue !== undefined) {
         this.lowerValue = this._lowerValue;
+      }
+      if (this._upperValue !== undefined) {
+        this._upperValue = this._upperValue;
       }
     }
   }

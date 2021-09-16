@@ -7,7 +7,12 @@ describe("model", () => {
     step: 2,
     lowerValue: 10,
   };
+  const testOptionsWithUpperValue: Model.Options = {
+    upperValue: 20,
+    ...testOptions,
+  }
   let testModel: SliderModel,
+    testModelWithUpperValue: SliderModel,
     observer: Model.Observer,
     anotherObserver: Model.Observer,
     updateFn: jest.Mock,
@@ -15,6 +20,7 @@ describe("model", () => {
 
   beforeEach(() => {
     testModel = new SliderModel(testOptions);
+    testModelWithUpperValue = new SliderModel(testOptionsWithUpperValue);
     updateFn = jest.fn();
     anotherUpdateFn = jest.fn();
     observer = {
@@ -27,6 +33,7 @@ describe("model", () => {
 
   afterEach(() => {
     testModel = null;
+    testModelWithUpperValue = null;
   });
 
   test('constructor should set instance properties', () => {
@@ -34,6 +41,10 @@ describe("model", () => {
     expect(testModel.minValue).toBe(0);
     expect(testModel.maxValue).toBe(50);
     expect(testModel.step).toBe(2);
+    expect(testModel.upperValue).toBeUndefined();
+
+    expect(testModelWithUpperValue).toBeInstanceOf(SliderModel);
+    expect(testModelWithUpperValue.upperValue).toBe(20);
   });
 
   test('getState should returns model state object', () => {
@@ -45,6 +56,11 @@ describe("model", () => {
     expect(state).toHaveProperty('maxValue', 50);
     expect(state).toHaveProperty('step', 2);
     expect(state).toHaveProperty('lowerValue', 10);
+    expect(state.upperValue).toBeUndefined();
+
+    const stateWithUpperValue = testModelWithUpperValue.getState();
+
+    expect(stateWithUpperValue).toHaveProperty('upperValue', 20);
   });
 
   test('should set the lowerValue', () => {
@@ -53,6 +69,17 @@ describe("model", () => {
 
     testModel.lowerValue = 4;
     expect(testModel.lowerValue).toBe(4);
+  });
+
+  test('should set the upperValue', () => {
+    testModelWithUpperValue.upperValue = 14;
+    expect(testModelWithUpperValue.upperValue).toBe(14);
+
+    testModelWithUpperValue.upperValue = 32;
+    expect(testModelWithUpperValue.upperValue).toBe(32);
+
+    testModelWithUpperValue.upperValue = 26;
+    expect(testModelWithUpperValue.upperValue).toBe(26);
   });
 
   test('set minValue should change this.minValue', () => {
@@ -75,10 +102,13 @@ describe("model", () => {
     expect(testModel.maxValue).toBe(50);
   })
 
-  test('set lowerValue should be a multiple of step', () => {
-    expect(testModel).toHaveProperty('lowerValue', 10);
+  test('set lowerValue and upperValue should be a multiple of step', () => {
+    expect(testModel.lowerValue).toBe(10);
     testModel.lowerValue = 13;
     expect(testModel.lowerValue).toBe(12);
+
+    testModelWithUpperValue.upperValue = 21;
+    expect(testModelWithUpperValue.upperValue).toBe(20);
   });
 
   test('set step should change this.step', () => {
@@ -92,16 +122,22 @@ describe("model", () => {
     expect(testModel.step).toBe(2);
   })
 
-  test('if the argument of the setValue fn is greater than the maxValue, then value should equal maxValue', () => {
+  test('if the argument of the set lowerValue and upperValue is greater than the maxValue, then value should equal maxValue', () => {
     const maxValue = testModel.maxValue;
     testModel.lowerValue = 99;
     expect(testModel.lowerValue).toEqual(maxValue);
+
+    testModelWithUpperValue.upperValue = 300;
+    expect(testModelWithUpperValue.upperValue).toEqual(maxValue);
   });
 
-  test('if the argument of the setValue fn is less than the minValue, then value should equal minValue', () => {
+  test('if the argument of the set lowerValue and upperValue is less than the minValue, then value should equal minValue', () => {
     const minValue = testModel.minValue;
     testModel.lowerValue = -33;
     expect(testModel.lowerValue).toEqual(minValue);
+
+    testModelWithUpperValue.upperValue = -144;
+    expect(testModelWithUpperValue.upperValue).toEqual(minValue);
   });
 
   test('addObserver should added observer to this.observers', () => {
@@ -163,13 +199,22 @@ describe("model", () => {
     expect(updateFn).not.toHaveBeenCalled();
   });
 
-  test('changing max or min liit should changed value', () => {
+  test('changing max or min limit should changed lowerValue and upperValue', () => {
     testModel.lowerValue = 25;
     testModel.maxValue = 20;
     expect(testModel.lowerValue).toBe(20);
 
     testModel.lowerValue = 8;
     testModel.minValue = 10;
+    expect(testModel.lowerValue).toBe(10);
+
+    testModelWithUpperValue.maxValue = 35;
+    testModelWithUpperValue.upperValue = 38;
+    expect(testModelWithUpperValue.upperValue).toBe(35);
+
+    testModelWithUpperValue.upperValue = 0;
+    testModelWithUpperValue.minValue = 10;
+    expect(testModelWithUpperValue.upperValue).toBe(10);
     expect(testModel.lowerValue).toBe(10);
   })
 

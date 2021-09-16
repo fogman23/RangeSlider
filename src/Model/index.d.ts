@@ -3,7 +3,7 @@ declare interface Model {
   maxValue: number,
   step: number,
   lowerValue: number,
-  // upperValue: number | null,
+  upperValue: number | null,
   getState(): Model.Options,
   updateState(state: Model.Options): void,
   addObserver(observer: Model.Observer): void,
@@ -16,7 +16,7 @@ declare namespace Model {
     maxValue?: number,
     step?: number,
     lowerValue?: number,
-    // upperValue?: number | null,
+    upperValue?: number | null,
   }
 
   interface Observer {
