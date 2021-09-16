@@ -69,7 +69,7 @@ export default class SliderModel implements Model {
 
   set lowerValue(value: number) {
     if (this.validate(value)) {
-      const { _minValue, _maxValue, _step, _lowerValue: oldValue } = this;
+      const { _minValue, _maxValue, _step, _lowerValue: oldValue, _upperValue } = this;
 
       if (this._lowerValue === undefined) {
         this._lowerValue = this._minValue;
@@ -79,8 +79,11 @@ export default class SliderModel implements Model {
         (value % _step) / _step > 0.5
           ? value - (value % _step) + _step
           : value - (value % _step);
-
-      if (valueMultipleStep >= _maxValue) {
+      
+      if (_upperValue !== undefined && valueMultipleStep >= _upperValue) {
+        this._lowerValue = _upperValue;
+        this.isUpdated = false;
+      }  else if (valueMultipleStep >= _maxValue) {
         this._lowerValue = _maxValue;
         this.isUpdated = false;
       } else if (valueMultipleStep <= _minValue) {
@@ -103,7 +106,7 @@ export default class SliderModel implements Model {
 
   set upperValue(value: number) {
     if (this.validate(value)) {
-      const { _minValue, _maxValue, _step, _upperValue: oldValue } = this;
+      const { _maxValue, _step, _lowerValue, _upperValue: oldValue } = this;
 
       const valueMultipleStep =
         (value % _step) / _step > 0.5
@@ -113,8 +116,8 @@ export default class SliderModel implements Model {
       if (valueMultipleStep >= _maxValue) {
         this._upperValue = _maxValue;
         this.isUpdated = false;
-      } else if (valueMultipleStep <= _minValue) {
-        this._upperValue = _minValue;
+      } else if (valueMultipleStep <= _lowerValue) {
+        this._upperValue = _lowerValue;
         this.isUpdated = false;
       } else {
         this._upperValue = valueMultipleStep;

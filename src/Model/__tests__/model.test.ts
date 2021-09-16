@@ -143,13 +143,14 @@ describe("model", () => {
     expect(testModelWithUpperValue.upperValue).toEqual(maxValue);
   });
 
-  test('if the argument of the set lowerValue and upperValue is less than the minValue, then value should equal minValue', () => {
+  test('if the argument of the set lowerValue is less than the minValue, then lowerValue should equal minValue, if the argument of the set upperValue is less that the lowerValue then upperValue should eauel lowerValue', () => {
     const minValue = testModel.minValue;
     testModel.lowerValue = -33;
     expect(testModel.lowerValue).toEqual(minValue);
 
+    const lowerValue = testModelWithUpperValue.lowerValue;
     testModelWithUpperValue.upperValue = -144;
-    expect(testModelWithUpperValue.upperValue).toEqual(minValue);
+    expect(testModelWithUpperValue.upperValue).toEqual(lowerValue);
   });
 
   test('addObserver should added observer to this.observers', () => {
@@ -344,5 +345,25 @@ describe("model", () => {
     expect(testModel.step).toBe(3);
     testModel.step = NaN;
     expect(testModel.step).toBe(3);
+  })
+
+  test('lowerValue should less or equal then upperValue', () => {
+    testModelWithUpperValue.upperValue = 26;
+    testModelWithUpperValue.lowerValue = 26;
+    expect(testModelWithUpperValue.lowerValue).toBe(26);
+
+    testModelWithUpperValue.lowerValue = 30;
+    expect(testModelWithUpperValue.lowerValue).toBe(26);
+  })
+
+  test('upperValue should greater or equel then lowerValue', () => {
+    testModelWithUpperValue.upperValue = 20;
+    testModelWithUpperValue.lowerValue = 20;
+
+    testModelWithUpperValue.upperValue = 10;
+    expect(testModelWithUpperValue.upperValue).toBe(20);
+
+    testModelWithUpperValue.upperValue = -10;
+    expect(testModelWithUpperValue.upperValue).toBe(20);
   })
 });
