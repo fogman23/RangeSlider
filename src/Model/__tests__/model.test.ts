@@ -135,16 +135,22 @@ describe("model", () => {
     });
   });
 
-  test('if the lowerValue changes, the model should notify observers', () => {
+  test('if the state changes, the model should notify observers', () => {
     testModel.addObserver(observer);
     testModel.addObserver(anotherObserver);
 
-    for (let i = 0; i < 8; i += testOptions.step) {
-      testModel.lowerValue = i;
-    }
+    testModel.lowerValue = 20;
+    testModel.minValue = -10;
+    testModel.maxValue = 80;
+    testModel.step = 5;
     
     expect(updateFn).toHaveBeenCalledTimes(4);
     expect(anotherUpdateFn).toHaveBeenCalledTimes(4);
+
+    testModel.minValue = -20;
+
+    expect(updateFn).toHaveBeenCalledTimes(5);
+    expect(anotherUpdateFn).toHaveBeenCalledTimes(5);
   });
 
   test('if the lowerValue does not changes, the model should not notify observers', () => {
@@ -156,6 +162,16 @@ describe("model", () => {
     testModel.lowerValue = testModel.getState().lowerValue;
     expect(updateFn).not.toHaveBeenCalled();
   });
+
+  test('changing max or min liit should changed value', () => {
+    testModel.lowerValue = 25;
+    testModel.maxValue = 20;
+    expect(testModel.lowerValue).toBe(20);
+
+    testModel.lowerValue = 8;
+    testModel.minValue = 10;
+    expect(testModel.lowerValue).toBe(10);
+  })
 
   test('updateState should take object Model.Options and update instance properties', () => {
     const newState: Model.Options = {
@@ -186,5 +202,20 @@ describe("model", () => {
     expect(testModel.lowerValue).toBe(-75);
     expect(testModel.step).toBe(15);
     expect(testModel.maxValue).toBe(300);
+  })
+
+  test('after updating the model with the updateState(), the notify() should be called only once', () => {
+    testModel.addObserver(observer);
+    testModel.addObserver(anotherObserver);
+
+    testModel.updateState({
+      minValue: -20,
+      maxValue: 20,
+      step: 4,
+      lowerValue: 8,
+    })
+
+    expect(updateFn).toHaveBeenCalledTimes(1);
+    expect(anotherUpdateFn).toHaveBeenCalledTimes(1);
   })
 });

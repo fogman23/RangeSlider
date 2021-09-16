@@ -3,17 +3,20 @@ export default class SliderModel implements Model {
   private _maxValue: number;
   private _step: number;
   private _lowerValue: number;
-  private observers: Set<Object>;
   // private _upperValue: number | null;
+  private observers: Set<Object>;
+  private isUpdated: boolean;
+  private readyNotify: boolean;
 
   constructor(options: Model.Options) {
     this.minValue = options.minValue;
     this.maxValue = options.maxValue;
     this.step = options.step;
     this.lowerValue = options.lowerValue;
-    this.observers = new Set();
-
     // this.upperValue = options.upperValue;
+    this.observers = new Set();
+    this.isUpdated = true;
+    this.readyNotify = true;
   }
 
   addObserver(observer: Model.Observer): void {
@@ -37,10 +40,15 @@ export default class SliderModel implements Model {
   updateState(state: Model.Options): void {
     const { maxValue, minValue, step, lowerValue } = state;
 
+    this.readyNotify = false;
+
     this.maxValue = maxValue !== undefined ? maxValue : this._maxValue;
     this.minValue = minValue !== undefined ? minValue : this._minValue;
     this.step = step !== undefined ? step : this._step;
     this.lowerValue = lowerValue !== undefined ? lowerValue :this._lowerValue;
+
+    this.readyNotify = true;
+    this.notify();
   }
 
   get lowerValue() {
@@ -54,21 +62,24 @@ export default class SliderModel implements Model {
       this._lowerValue = this._minValue;
     }
 
+    if (this._lowerValue === value && this.isUpdated) {
+      return;
+    }
+
     const valueMultipleStep =
       (value % _step) / _step > 0.5
         ? value - (value % _step) + _step
         : value - (value % _step);
 
-    if (this._lowerValue === valueMultipleStep) {
-      return;
-    }
-
     if (valueMultipleStep >= _maxValue) {
       this._lowerValue = _maxValue;
+      this.isUpdated = false;
     } else if (valueMultipleStep <= _minValue) {
       this._lowerValue = _minValue;
+      this.isUpdated = false;
     } else {
       this._lowerValue = valueMultipleStep;
+      this.isUpdated = false;
     }
 
     if (this.observers !== undefined) {
@@ -83,6 +94,10 @@ export default class SliderModel implements Model {
   set minValue(value: number) {
     if (this._maxValue === undefined || value < this._maxValue) {
       this._minValue = value;
+      this.isUpdated = false;
+      if (this._lowerValue !== undefined) {
+        this.lowerValue = this._lowerValue
+      }
     }
   }
 
@@ -93,6 +108,10 @@ export default class SliderModel implements Model {
   set maxValue(value: number) {
     if (this._minValue === undefined || value > this._minValue) {
       this._maxValue = value;
+      this.isUpdated = false;
+      if (this._lowerValue !== undefined) {
+        this.lowerValue = this._lowerValue
+      }
     }
   }
 
@@ -103,6 +122,7 @@ export default class SliderModel implements Model {
   set step(value: number) {
     if (value > 0) {
       this._step = value;
+      this.isUpdated = false;
       if (this._lowerValue !== undefined) {
         this.lowerValue = this._lowerValue;
       }
@@ -110,11 +130,12 @@ export default class SliderModel implements Model {
   }
 
   notify(): void {
-    if (this.observers.size !== 0) {
+    if (this.observers.size !== 0 && this.readyNotify) {
       this.observers.forEach((observer: Model.Observer): void => {
         observer.update();
       });
     }
+    this.isUpdated = true;
   }
 
 }
