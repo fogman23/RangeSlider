@@ -41,7 +41,7 @@ export default class SliderView implements View {
   notify(value: number): void {
     this.observers.forEach((observer: View.Observer): void => {
       observer.update(value);
-    })
+    });
   }
 
   private attachEventListener() {
@@ -49,6 +49,6 @@ export default class SliderView implements View {
       const base = event.currentTarget;
       const value = Math.floor((event.clientX - base.offsetLeft) / base.offsetWidth * 100);
       this.notify(value);
-    })
+    });
   }
 }

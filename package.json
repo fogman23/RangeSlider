@@ -5,6 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "test": "jest",
+    "eslint": "eslint",
     "start": "cross-env NODE_ENV=development webpack-dev-server --mode development --open",
     "build:prod": "cross-env NODE_ENV=production webpack --mode production",
     "build:dev": "cross-env NODE_ENV=development webpack --mode development"
@@ -29,8 +30,14 @@
   "devDependencies": {
     "@types/jest": "^27.0.1",
     "@types/jquery": "^3.5.6",
+    "@typescript-eslint/eslint-plugin": "^4.31.1",
+    "@typescript-eslint/parser": "^4.31.1",
     "cross-env": "^7.0.3",
     "css-loader": "^6.2.0",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb": "^18.2.1",
+    "eslint-config-airbnb-typescript": "^14.0.0",
+    "eslint-plugin-import": "^2.24.2",
     "html-webpack-plugin": "^5.3.2",
     "jest": "^27.1.1",
     "mini-css-extract-plugin": "^2.3.0",

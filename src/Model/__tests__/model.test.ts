@@ -1,6 +1,6 @@
-import SliderModel from "../model";
+import SliderModel from '../model';
 
-describe("model", () => {
+describe('model', () => {
   const testOptions: Model.Options = {
     minValue: 0,
     maxValue: 50,
@@ -10,7 +10,7 @@ describe("model", () => {
   const testOptionsWithUpperValue: Model.Options = {
     upperValue: 20,
     ...testOptions,
-  }
+  };
   let testModel: SliderModel,
     testModelWithUpperValue: SliderModel,
     observer: Model.Observer,
@@ -90,7 +90,7 @@ describe("model", () => {
   test('set minValue should not change this.minValue, if value greater then this.maxValue', () => {
     testModel.minValue = 100;
     expect(testModel.minValue).toBe(0);
-  })
+  });
 
   test('set maxValue should change this._maxValue', () => {
     testModel.maxValue = 200;
@@ -100,7 +100,7 @@ describe("model", () => {
   test('set maxValue should not change this._maxValue, if value less then this._minValue', () => {
     testModel.maxValue = -20;
     expect(testModel.maxValue).toBe(50);
-  })
+  });
 
   test('set lowerValue and upperValue should be a multiple of step', () => {
     expect(testModel.lowerValue).toBe(10);
@@ -120,7 +120,7 @@ describe("model", () => {
   test('step should be greater than 0', () => {
     testModel.step = -2;
     expect(testModel.step).toBe(2);
-  })
+  });
 
   test('changing step should change lowerValue and upperValue', () => {
     testModel.step = 12;
@@ -132,7 +132,7 @@ describe("model", () => {
     expect(testModelWithUpperValue.upperValue).toBe(16);
     testModelWithUpperValue.step = 11;
     expect(testModelWithUpperValue.upperValue).toBe(11);
-  })
+  });
 
   test('if the argument of the set lowerValue and upperValue is greater than the maxValue, then value should equal maxValue', () => {
     const maxValue = testModel.maxValue;
@@ -158,7 +158,8 @@ describe("model", () => {
     testModel.addObserver(observer);
 
     const entries = Object.entries(testModel);
-    entries.forEach((entry: [string, any]) => {
+    
+    entries.forEach((entry) => {
       if (entry[0] === 'observers') {
         expect(entry[1].has(observer)).toBeTruthy();
       }
@@ -170,14 +171,14 @@ describe("model", () => {
     const entries = Object.entries(testModel);
 
     testModel.addObserver(observer);
-    entries.forEach((entry: [string, any]) => {
+    entries.forEach((entry) => {
       if (entry[0] === 'observers') {
         expect(entry[1].has(observer)).toBeTruthy();
       }
     });
 
     testModel.removeObserver(observer);
-    entries.forEach((entry: [string, any]) => {
+    entries.forEach((entry) => {
       if (entry[0] === 'observers') {
         expect(entry[1].has(observer)).toBeFalsy();
       }
@@ -247,7 +248,7 @@ describe("model", () => {
     testModelWithUpperValue.minValue = 10;
     expect(testModelWithUpperValue.upperValue).toBe(10);
     expect(testModel.lowerValue).toBe(10);
-  })
+  });
 
   test('updateState should take object Model.Options and update instance properties', () => {
     const newState: Model.Options = {
@@ -258,8 +259,8 @@ describe("model", () => {
       // upperValue: null,
     };
     const newMinValue: Model.Options = {
-      minValue: -145
-    }
+      minValue: -145,
+    };
 
     testModel.updateState(newState);
     
@@ -280,9 +281,9 @@ describe("model", () => {
     expect(testModel.maxValue).toBe(300);
 
     expect(testModel.upperValue).toBeUndefined();
-    testModel.updateState({upperValue: 30});
+    testModel.updateState({ upperValue: 30 });
     expect(testModel.upperValue).toBe(30);
-  })
+  });
 
   test('after updating the model with the updateState(), the notify() should be called only once', () => {
     testModel.addObserver(observer);
@@ -293,16 +294,16 @@ describe("model", () => {
       maxValue: 20,
       step: 4,
       lowerValue: 8,
-    })
+    });
 
     expect(updateFn).toHaveBeenCalledTimes(1);
     expect(anotherUpdateFn).toHaveBeenCalledTimes(1);
 
-    testModel.updateState({upperValue: 30});
+    testModel.updateState({ upperValue: 30 });
 
     expect(updateFn).toHaveBeenCalledTimes(2);
     expect(anotherUpdateFn).toHaveBeenCalledTimes(2);
-  })
+  });
 
   test('setter argument should be valid', () => {
     testModel.lowerValue = undefined;
@@ -345,7 +346,7 @@ describe("model", () => {
     expect(testModel.step).toBe(3);
     testModel.step = NaN;
     expect(testModel.step).toBe(3);
-  })
+  });
 
   test('lowerValue should less or equal then upperValue', () => {
     testModelWithUpperValue.upperValue = 26;
@@ -354,7 +355,7 @@ describe("model", () => {
 
     testModelWithUpperValue.lowerValue = 30;
     expect(testModelWithUpperValue.lowerValue).toBe(26);
-  })
+  });
 
   test('upperValue should greater or equel then lowerValue', () => {
     testModelWithUpperValue.upperValue = 20;
@@ -365,5 +366,5 @@ describe("model", () => {
 
     testModelWithUpperValue.upperValue = -10;
     expect(testModelWithUpperValue.upperValue).toBe(20);
-  })
+  });
 });

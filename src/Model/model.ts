@@ -4,9 +4,9 @@ export default class SliderModel implements Model {
   private _step: number;
   private _lowerValue: number;
   private _upperValue: number | null;
-  private observers: Set<Object>;
+  private observers: Set<Model.Observer>;
   private isUpdated: boolean;
-  private readyNotify: boolean;
+  private isReadyNotify: boolean;
 
   constructor(options: Model.Options) {
     this.minValue = options.minValue;
@@ -18,7 +18,7 @@ export default class SliderModel implements Model {
     }
     this.observers = new Set();
     this.isUpdated = true;
-    this.readyNotify = true;
+    this.isReadyNotify = true;
   }
 
   addObserver(observer: Model.Observer): void {
@@ -42,7 +42,7 @@ export default class SliderModel implements Model {
   updateState(state: Model.Options): void {
     const { maxValue, minValue, step, lowerValue, upperValue } = state;
 
-    this.readyNotify = false;
+    this.isReadyNotify = false;
 
     if (maxValue !== undefined) {
       this.maxValue = maxValue;
@@ -59,26 +59,30 @@ export default class SliderModel implements Model {
     if (upperValue !== undefined) {
       this.upperValue = upperValue;
     }
-    this.readyNotify = true;
+    this.isReadyNotify = true;
     this.notify();
   }
 
-  get lowerValue() {
+  private getMultipleStepValue(value: number): number {
+    const { _step: step } = this;
+    return (value % step) / step > 0.5
+      ? value - (value % step) + step
+      : value - (value % step);
+  }
+
+  get lowerValue(): number {
     return this._lowerValue;
   }
 
   set lowerValue(value: number) {
     if (this.validate(value)) {
-      const { _minValue, _maxValue, _step, _lowerValue: oldValue, _upperValue } = this;
+      const { _minValue, _maxValue, _lowerValue: oldValue, _upperValue } = this;
 
       if (this._lowerValue === undefined) {
         this._lowerValue = this._minValue;
       }
 
-      const valueMultipleStep =
-        (value % _step) / _step > 0.5
-          ? value - (value % _step) + _step
-          : value - (value % _step);
+      const valueMultipleStep = this.getMultipleStepValue(value);
       
       if (_upperValue !== undefined && valueMultipleStep >= _upperValue) {
         this._lowerValue = _upperValue;
@@ -100,18 +104,15 @@ export default class SliderModel implements Model {
     }
   }
 
-  get upperValue() {
+  get upperValue(): number {
     return this._upperValue;
   }
 
   set upperValue(value: number) {
     if (this.validate(value)) {
-      const { _maxValue, _step, _lowerValue, _upperValue: oldValue } = this;
-
-      const valueMultipleStep =
-        (value % _step) / _step > 0.5
-          ? value - (value % _step) + _step
-          : value - (value % _step);
+      const { _maxValue, _lowerValue, _upperValue: oldValue } = this;
+      
+      const valueMultipleStep = this.getMultipleStepValue(value);
 
       if (valueMultipleStep >= _maxValue) {
         this._upperValue = _maxValue;
@@ -130,7 +131,7 @@ export default class SliderModel implements Model {
     }
   }
 
-  get minValue() {
+  get minValue(): number {
     return this._minValue;
   }
 
@@ -152,7 +153,7 @@ export default class SliderModel implements Model {
     }
   }
 
-  get maxValue() {
+  get maxValue(): number {
     return this._maxValue;
   }
 
@@ -174,7 +175,7 @@ export default class SliderModel implements Model {
     }
   }
 
-  get step() {
+  get step(): number {
     return this._step;
   }
 
@@ -196,11 +197,11 @@ export default class SliderModel implements Model {
     }
   }
 
-  notify(): void {
+  private notify(): void {
     if (
       this.observers !== undefined &&
       this.observers.size !== 0 &&
-      this.readyNotify
+      this.isReadyNotify
     ) {
       this.observers.forEach((observer: Model.Observer): void => {
         observer.update();
@@ -209,7 +210,7 @@ export default class SliderModel implements Model {
     this.isUpdated = true;
   }
 
-  private validate(value: any): boolean {
+  private validate(value: number): boolean {
     return !(value === null || isNaN(value) || !isFinite(value));
   }
 }
