@@ -43,6 +43,14 @@ export default class SliderPresenter implements Presenter {
     return this.dataValues;
   }
 
+  getAllData(): App.Options {
+    return {
+      ...this.getModelData(),
+      ...this.getViewData(),
+      dataValues: this.getPresenterData(),
+    };
+  }
+
   private createDataValues(): number[] {
     const { minValue: min, maxValue: max, step } = this.model.getState();
 

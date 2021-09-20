@@ -182,5 +182,27 @@ describe('Presenter', () => {
       ]);
     });
   });
+
+  describe('getAllData', () => {
+    test('should returns data: model, view, presenter', () => {
+      const allData = testPresenter.getAllData();
+      expect(allData).toEqual({
+        minValue: 0,
+        maxValue: 100,
+        step: 4,
+        lowerValue: 20,
+        upperValue: null,
+        orientation: 'horizontal',
+        range: true,
+        bar: true,
+        scale: false,
+        tooltip: false,
+        dataValues: [
+          0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72,
+          76, 80, 84, 88, 92, 96, 100,
+        ],
+      });
+    });
+  });
   
 });
