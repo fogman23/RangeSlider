@@ -1,36 +1,71 @@
-import SliderModel from '../Model/model';
-import SliderView from '../View/view';
-
 export default class SliderPresenter implements Presenter {
-  private model: SliderModel;
-  private view: SliderView;
+  private model: Model;
+  private view: View;
   private modelObserver: Model.Observer;
   private viewObserver: View.Observer;
+  private dataValues: number[];
 
-  constructor(model: SliderModel, view: SliderView) {
-    this.model = model;
-    this.view = view;
+  constructor(options: Presenter.Options) {
+    this.model = options.model;
+    this.view = options.view;
 
-    this.viewObserver = {
-      update: (value: number) => {}
+    this.subscribeToModel();
+    this.subscribeToView();
+
+    if (options.dataValues !== undefined) {
+      this.dataValues = options.dataValues;
+    } else {
+      this.dataValues = this.createDataValues();
     }
-    this.modelObserver = {
-      update: () => {}
-    }
-    this.subscribeModelObserver(this.modelObserver);
-    this.subscribeViewObserver(this.viewObserver);
 
+    this.renderView();
   }
 
-  renderView(renderData: View.Data): void {}
+  private renderView(): void {
+    this.view.render(this.dataValues);
+  }
+
+  update(options: App.Options): void {}
 
   updateModel(updateData: Model.Options): void {}
 
-  private subscribeModelObserver(observer: Model.Observer): void {
-    this.model.addObserver(observer);
+  updateView(renderData: View.Options): void {}
+
+  getModelData(): Model.Options {
+    return this.model.getState();
   }
 
-  private subscribeViewObserver(observer: View.Observer): void {
-    this.view.addObserver(observer);
+  getViewData(): View.Options {
+    return this.view.getData();
+  }
+
+  getPresenterData(): number[] {
+    return this.dataValues;
+  }
+
+  private createDataValues(): number[] {
+    const { minValue: min, maxValue: max, step } = this.model.getState();
+
+    const dataValues: number[] = [];
+
+    for (let i = min; i <= max; i += step) {
+      dataValues.push(i);
+    }
+
+    return dataValues;
+  }
+
+  private subscribeToModel(): void {
+    this.modelObserver = {
+      update: (): void => {},
+    };
+    this.model.addObserver(this.modelObserver);
+  }
+
+  private subscribeToView(): void {
+    this.viewObserver = {
+      update: (value: number): void => {},
+    };
+    this.view.addObserver(this.viewObserver);
   }
 }

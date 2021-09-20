@@ -16,7 +16,7 @@ export default class SliderView implements View {
     this.isRendered = false;
   }
 
-  render(data: View.Data): void {
+  render(dataValues: number[]): void {
     if (!this.isRendered) {
       this.$container.append(this.$target);
       this.$target.append(this.$base);
@@ -42,6 +42,10 @@ export default class SliderView implements View {
     this.observers.forEach((observer: View.Observer): void => {
       observer.update(value);
     });
+  }
+
+  getData(): View.Options {
+    return 
   }
 
   private attachEventListener() {
