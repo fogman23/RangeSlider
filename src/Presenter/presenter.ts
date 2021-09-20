@@ -65,7 +65,9 @@ export default class SliderPresenter implements Presenter {
 
   private subscribeToModel(): void {
     this.modelObserver = {
-      update: (): void => {},
+      update: (): void => {
+        const newModelData = this.getModelData();
+      },
     };
     this.model.addObserver(this.modelObserver);
   }

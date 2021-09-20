@@ -23,16 +23,23 @@ describe('Presenter', () => {
     tooltip: false,
   };
 
-  const modelObserver = new Set<Model.Observer>();
-  const viewObserver = new Set<View.Observer>();
+  const modelObservers = new Set<Model.Observer>();
+  const viewObservers = new Set<View.Observer>();
+  const mockModelNotify = jest.fn(() => {
+    modelObservers.forEach((observer: Model.Observer) => {
+      observer.update();
+    });
+  });
 
   const mockGetState = jest.fn((): Model.Options => testModelState),
-    mockUpdateState = jest.fn(),
+    mockUpdateState = jest.fn(() => {
+      mockModelNotify();
+    }),
     mockAddObserver = jest.fn((observer: Model.Observer) => {
-      modelObserver.add(observer);
+      modelObservers.add(observer);
     }),
     mockRemoveObserver = jest.fn((observer: Model.Observer) => {
-      modelObserver.delete(observer);
+      modelObservers.delete(observer);
     }),
     mockSetLowerValue = jest.fn(),
     mockSetUpperValue = jest.fn();
@@ -40,10 +47,10 @@ describe('Presenter', () => {
   const mockRender = jest.fn(),
     mockUpdate = jest.fn(),
     mockViewAddObserver = jest.fn((observer: Model.Observer) => {
-      viewObserver.add(observer);
+      viewObservers.add(observer);
     }),
     mockViewRemoveObserver = jest.fn((observer: Model.Observer) => {
-      viewObserver.delete(observer);
+      viewObservers.delete(observer);
     }),
     mockGetViewData = jest.fn((): View.Options => testViewOptions);
 
@@ -61,7 +68,7 @@ describe('Presenter', () => {
       setlowerValue: mockSetLowerValue,
       setUpperValue: mockSetUpperValue,
       notify: (): void => {
-        modelObserver.forEach((observer: Model.Observer) => {
+        modelObservers.forEach((observer: Model.Observer) => {
           observer.update();
         });
       },
@@ -95,8 +102,8 @@ describe('Presenter', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    modelObserver.clear();
-    viewObserver.clear();
+    modelObservers.clear();
+    viewObservers.clear();
   });
 
   describe('constructor', () => {
@@ -117,12 +124,12 @@ describe('Presenter', () => {
 
     test('should calls model method addObserver', () => {
       expect(mockAddObserver).toHaveBeenCalledTimes(1);
-      expect(modelObserver.size).toBe(1);
+      expect(modelObservers.size).toBe(1);
     });
 
     test('should calls view method addObserver', () => {
       expect(mockViewAddObserver).toHaveBeenCalledTimes(1);
-      expect(viewObserver.size).toBe(1);
+      expect(viewObservers.size).toBe(1);
     });
 
     test('should calls render method of view', () => {
@@ -202,6 +209,18 @@ describe('Presenter', () => {
           76, 80, 84, 88, 92, 96, 100,
         ],
       });
+    });
+  });
+
+  describe('model observer', () => {
+    beforeEach(() => {
+      mockAddObserver.mockClear();
+      testModel.updateState({ lowerValue: 6 });
+    });
+
+    test('observer should request updated model data', () => {
+      expect(mockModelNotify).toHaveBeenCalledTimes(1);
+      expect(mockGetState).toHaveBeenCalledTimes(1);
     });
   });
   
