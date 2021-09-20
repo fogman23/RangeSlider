@@ -23,17 +23,28 @@ describe('Presenter', () => {
     tooltip: false,
   };
 
+  const modelObserver = new Set<Model.Observer>();
+  const viewObserver = new Set<View.Observer>();
+
   const mockGetState = jest.fn((): Model.Options => testModelState),
     mockUpdateState = jest.fn(),
-    mockAddObserver = jest.fn(),
-    mockRemoveObserver = jest.fn(),
+    mockAddObserver = jest.fn((observer: Model.Observer) => {
+      modelObserver.add(observer);
+    }),
+    mockRemoveObserver = jest.fn((observer: Model.Observer) => {
+      modelObserver.delete(observer);
+    }),
     mockSetLowerValue = jest.fn(),
     mockSetUpperValue = jest.fn();
 
   const mockRender = jest.fn(),
     mockUpdate = jest.fn(),
-    mockViewAddObserver = jest.fn(),
-    mockViewRemoveObserver = jest.fn(),
+    mockViewAddObserver = jest.fn((observer: Model.Observer) => {
+      viewObserver.add(observer);
+    }),
+    mockViewRemoveObserver = jest.fn((observer: Model.Observer) => {
+      viewObserver.delete(observer);
+    }),
     mockGetViewData = jest.fn((): View.Options => testViewOptions);
 
   const MockModel = jest.fn<Model, []>(() => {
@@ -49,6 +60,11 @@ describe('Presenter', () => {
       removeObserver: mockRemoveObserver,
       setlowerValue: mockSetLowerValue,
       setUpperValue: mockSetUpperValue,
+      notify: (): void => {
+        modelObserver.forEach((observer: Model.Observer) => {
+          observer.update();
+        });
+      },
     };
   });
 
@@ -79,6 +95,8 @@ describe('Presenter', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    modelObserver.clear();
+    viewObserver.clear();
   });
 
   describe('constructor', () => {
@@ -99,10 +117,12 @@ describe('Presenter', () => {
 
     test('should calls model method addObserver', () => {
       expect(mockAddObserver).toHaveBeenCalledTimes(1);
+      expect(modelObserver.size).toBe(1);
     });
 
     test('should calls view method addObserver', () => {
       expect(mockViewAddObserver).toHaveBeenCalledTimes(1);
+      expect(viewObserver.size).toBe(1);
     });
 
     test('should calls render method of view', () => {
