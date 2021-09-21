@@ -16,7 +16,7 @@ export default class SliderView implements View {
     this.isRendered = false;
   }
 
-  render(dataValues: number[]): void {
+  render(dataValues: Array<number | string>): void {
     if (!this.isRendered) {
       this.$container.append(this.$target);
       this.$target.append(this.$base);
@@ -28,7 +28,7 @@ export default class SliderView implements View {
     
   }
 
-  update(data: View.Data): void {}
+  update(options: View.Options): void {}
 
   addObserver(observer: View.Observer): void {
     this.observers.add(observer);

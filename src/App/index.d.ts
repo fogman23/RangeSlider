@@ -12,11 +12,9 @@ declare namespace App {
     scale?: boolean;
     tooltip?: boolean;
 
-    dataValues?: number[];
+    dataValues?: Array<number | string>;
 
-    onStart?: CallableFunction;
     onChange?: CallableFunction;
-    onFinish?: CallableFunction;
     onUpdate?: CallableFunction;
   }
 }

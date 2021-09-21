@@ -1,7 +1,7 @@
 declare interface View {
   getData(): View.Options;
-  render(dataValues: number[]): void;
-  update(data: View.Data): void;
+  render(dataValues: Array<number | string>): void;
+  update(options: View.Options): void;
   addObserver(observer: View.Observer): void;
   removeObserver(observer: View.Observer): void;
 }
