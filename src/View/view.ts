@@ -16,7 +16,7 @@ export default class SliderView implements View {
     this.isRendered = false;
   }
 
-  render(dataValues: Array<number | string>): void {
+  render(renderData: View.RenderData): void {
     if (!this.isRendered) {
       this.$container.append(this.$target);
       this.$target.append(this.$base);

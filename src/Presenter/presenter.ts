@@ -12,8 +12,8 @@ export default class SliderPresenter implements Presenter {
     this.model = options.model;
     this.view = options.view;
     
-    if (options.dataValues !== undefined) {
-      this.dataValues = options.dataValues;
+    if (options.dataValues !== undefined && options.dataValues.length) {
+      this.updateDataValues(options.dataValues);
     } else {
       this.dataValues = [];
     }
@@ -26,10 +26,6 @@ export default class SliderPresenter implements Presenter {
     this.subscribeToModel();
     this.subscribeToView();
     this.renderView();
-  }
-
-  private renderView(): void {
-    this.view.render(this.renderData);
   }
 
   update(options: App.Options): void {
@@ -49,12 +45,17 @@ export default class SliderPresenter implements Presenter {
       tooltip: options.tooltip,
     };
 
-    this.model.updateState(modelOptions);
-    this.view.update(viewOptions);
-
-    if (options.dataValues !== undefined) {
-      this.dataValues = options.dataValues;
+    if (!this.isEmpty(modelOptions)) {
+      this.model.updateState(modelOptions);
+    }
+    if (!this.isEmpty(viewOptions)) {
+      this.view.update(viewOptions);
+    }
+    
+    if (options.dataValues !== undefined && options.dataValues.length) {
+      this.updateDataValues(options.dataValues);
       this.renderData = this.createDataValues();
+      this.renderView();
     }
 
     this.onUpdate();
@@ -113,5 +114,35 @@ export default class SliderPresenter implements Presenter {
       update: (value: number): void => {},
     };
     this.view.addObserver(this.viewObserver);
+  }
+
+  private renderView(): void {
+    const currentValue = this.getModelData().lowerValue;
+    const data: View.RenderData = {
+      data: this.renderData,
+      value: currentValue,
+    };
+    this.view.render(data);
+  }
+
+  private updateDataValues(values: Array<number | string>): void {
+    this.dataValues = values;
+    this.model.updateState({
+      minValue: 0,
+      maxValue: values.length - 1,
+      step: 1,
+    });
+  }
+
+  private isEmpty(object: {}): boolean {
+    const entries = Object.entries(object);
+    let isEmpty = true;
+
+    entries.forEach((entry) => {
+      if (entry[1] !== undefined) {
+        isEmpty = false;
+      }
+    });
+    return isEmpty;
   }
 }

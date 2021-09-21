@@ -1,6 +1,6 @@
 declare interface View {
   getData(): View.Options;
-  render(dataValues: Array<number | string>): void;
+  render(renderData: View.RenderData): void;
   update(options: View.Options): void;
   addObserver(observer: View.Observer): void;
   removeObserver(observer: View.Observer): void;
@@ -19,9 +19,8 @@ declare namespace View {
     tooltip: boolean;
   }
 
-  interface Data {
+  interface RenderData {
+    data: Array<number | string>;
     value: number;
-    step: number;
-    interval: [number, number];
   }
 }
